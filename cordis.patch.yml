@@ -1,0 +1,15 @@
+# dsh-skill-learning-coach bundle patch —— 只贡献本包自带的 skill，不动学习者的项目根与用户根扫描。
+# 写法照本机现役的 dsh-super-code：不拿 baseUrl 当 skill 根，而是从"已安装的包"反查目录——
+# profile 层可能另存一份声明，按 patch 文件位置算会算到错的地方。
+- insert:
+    - id: skill-learning-coach-bundled
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: learning-coach-bundled
+        includeDefaultRoots: false
+        watch: false
+        bundledSkillDir: !!js >-
+          (() => {
+            const require = process.getBuiltinModule('node:module').createRequire(new URL('package.json', baseUrl))
+            return require('node:path').join(require('node:path').dirname(require.resolve('dsh-skill-learning-coach/package.json')), 'skills')
+          })()
