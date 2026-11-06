@@ -1,0 +1,31 @@
+{
+  "name": "dsh-skill-learning-coach",
+  "version": "0.1.0",
+  "description": "DSH 生态的引导学习 skill：先用提问帮学习者自己确认学习路线，再给方案与资料清单，无资料时现写本节一页辅助讲义。零代码，只随包提供 SKILL.md bundle。",
+  "type": "module",
+  "exports": {
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "skills/**",
+    "docs/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "skill",
+    "learning",
+    "study",
+    "roadmap"
+  ],
+  "license": "MIT"
+}
