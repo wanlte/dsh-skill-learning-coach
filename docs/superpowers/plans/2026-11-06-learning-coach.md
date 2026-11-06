@@ -74,13 +74,11 @@ export DSH="/f/Program Files (x86)/deepseekharness/resources/runtime/cli/bin/dsh
 - [ ] Step 1: YAML 结构（pyyaml 本机可用）
 
 ```bash
-python -c "
-import yaml
-d=yaml.load(open('cordis.patch.yml',encoding='utf-8'),Loader=yaml.SafeLoader.__new__((dict,))) if False else None
-" 2>/dev/null; python - <<'PY'
+python - <<'PY'
 import yaml
 class L(yaml.SafeLoader): pass
-L.add_multi_constructor('!!', lambda loader,suffix,node: None)
+# pyyaml 把 !!js 解析成 tag:yaml.org,2002:js；add_multi_constructor('!!',...) 抓不到它。
+L.add_constructor('tag:yaml.org,2002:js', lambda loader, node: node.value)
 d=yaml.load(open('cordis.patch.yml',encoding='utf-8'),Loader=L)
 e=d[0]['insert'][0]
 assert e['id']=='skill-learning-coach-bundled', e['id']
@@ -88,31 +86,64 @@ assert e['name']=='@deepseek-ai/dsh-skill-filesystem'
 c=e['config']
 assert c['providerName']=='learning-coach-bundled'
 assert c['includeDefaultRoots'] is False and c['watch'] is False
-assert 'dsh-skill-learning-coach/package.json' in c['bundledSkillDir']
-assert c['bundledSkillDir'].rstrip().endswith(", 'skills')")
-print('yaml ok:', e['id'])
+x=c['bundledSkillDir']
+assert 'dsh-skill-learning-coach/package.json' in x
+assert x.rstrip().endswith('})()') and "'skills'" in x
+print('ok: patch 结构与表达式文本齐备（表达式 %d 字符）' % len(x))
 PY
 ```
-Expected: `yaml ok: skill-learning-coach-bundled`。（`!!js` 是 DSH 自定义标签，故注册一个忽略型 multi-constructor，只为校验结构。）
+Expected: `ok: patch 结构与表达式文本齐备（表达式 … 字符）`。这一步只校验 YAML 形状与表达式文本，不执行 JS。
 
 - [ ] Step 2: 在"已安装"的模拟目录里跑那条表达式，确认真指到 skill 根
 
+`mktemp -d` 给的是 POSIX 路径（`/tmp/xxx`），直接当 baseUrl 会让 `require.resolve` 去找 `Temp\package.json`；所以这段用纯 Node 脚本，临时目录由 Node 自己用 `mkdtempSync(path.join(tmpdir(), ...))` 建，全程 Windows 绝对路径。
+
 ```bash
-T="$(mktemp -d)"; mkdir -p "$T/node_modules/dsh-skill-learning-coach"
-cp package.json "$T/node_modules/dsh-skill-learning-coach/"
-cp -r skills "$T/node_modules/dsh-skill-learning-coach/skills"
-node -e '
-const path=require("node:path"),fs=require("fs"),{pathToFileURL}=require("node:url");
-const baseUrl=pathToFileURL(process.argv[1]).href;
-const req=process.getBuiltinModule("node:module").createRequire(new URL("package.json",baseUrl));
-const dir=path.join(path.dirname(req.resolve("dsh-skill-learning-coach/package.json")),"skills");
-console.log("解析到:",dir);
-if(!fs.existsSync(path.join(dir,"learning-coach","SKILL.md")))throw new Error("解析结果里没有 learning-coach/SKILL.md");
-console.log("ok: 表达式在已安装情形下指向真实 skill 根");
-' "$(cygpath -w "$T")/"
-rm -rf "$T"
+node --input-type=module - "$(cygpath -w "$PWD")" <<'MJS'
+import { mkdtempSync, mkdirSync, cpSync, existsSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { createRequire } from 'node:module'
+
+const pkgRoot = path.resolve(process.argv[2])
+const T = mkdtempSync(path.join(tmpdir(), 'dsh-lc-check-'))
+const installed = path.join(T, 'profile', 'node_modules', 'dsh-skill-learning-coach')
+mkdirSync(installed, { recursive: true })
+cpSync(path.join(pkgRoot, 'package.json'), path.join(installed, 'package.json'))
+cpSync(path.join(pkgRoot, 'skills'), path.join(installed, 'skills'), { recursive: true })
+
+// DSH 传进 patch 的 baseUrl 是 profile 目录 URL（以 / 结尾）；super-code 的写法从"已安装的包"反查目录。
+const evalExpr = (baseUrl) => {
+  const req = createRequire(new URL('package.json', baseUrl))
+  return path.join(path.dirname(req.resolve('dsh-skill-learning-coach/package.json')), 'skills')
+}
+
+try {
+  const hit = evalExpr(pathToFileURL(path.join(T, 'profile') + path.sep).href)
+  console.log('正向解析到 =', hit)
+  for (const f of ['learning-coach/SKILL.md', 'learning-coach/references/intake.md', 'learning-coach/references/materials.md']) {
+    if (!existsSync(path.join(hit, f))) throw new Error('缺 ' + f)
+  }
+  console.log('ok: 已安装情形下三条 bundle 文件都在解析结果里')
+
+  // 反向对照：profile 里没装本包时必须失败，否则包名打错也发现不了。
+  const empty = path.join(T, 'empty-profile')
+  mkdirSync(empty, { recursive: true })
+  try {
+    evalExpr(pathToFileURL(empty + path.sep).href)
+    console.log('FAIL: 未安装也解析成功了，检查无效力')
+    process.exitCode = 1
+  } catch (err) {
+    console.log('ok: 未安装时报 MODULE_NOT_FOUND（', err.code, '），检查有效力')
+  }
+} finally {
+  rmSync(T, { recursive: true, force: true })
+}
+MJS
 ```
-Expected: `ok: 表达式在已安装情形下指向真实 skill 根`。这一步专抓一个致命错别字：`require.resolve()` 里包名写错，别人装完就是"静默没有 skill"，比报错难查。
+Expected: 三行——`正向解析到 = …`、`ok: 已安装情形下三条 bundle 文件都在解析结果里`、`ok: 未安装时报 MODULE_NOT_FOUND …`。
+这一步专抓一个致命错别字：`require.resolve()` 里包名写错，别人装完就是"静默没有 skill"，比报错难查；反向对照就是这条检查的效力证明。
 
 - [ ] Step 3: 包声明覆盖到位
 
