@@ -8,7 +8,7 @@
 - 📝 **现写讲义**：只写当前这一节的一页辅助讲义，读完再走下一节
 - 🎯 **收口**：说清路线在哪、讲义在哪、下一节的第一个动作是什么
 
-零代码插件包——没有 TypeScript、没有构建、没有依赖，随包只带一份 skill bundle。
+学习流程的核心仍是零代码的 skill bundle（无运行时依赖）；v2 的 host 半只做路由转发，构建产物只有客户端设置卡。
 
 ## 为什么做这个 skill
 
@@ -31,6 +31,7 @@ DSH 随包的 skill 只有 cordis 插件开发类和 office 文档类，没有�
 | 「待核实」防编造 | 讲义页首强制自标注；不确定的一律标「待核实」，不编造数字、API 名、版本行为；与官方文档冲突时以来源为准 |
 | 禁止批量生成 | 一次只写当前一节——学习者要求全部生成时，先说明为什么，然后只交当前这一页 |
 | 收口三件事 | 路线落在哪个文件、这一页讲义在哪、下一节的第一个动作是什么；不给掌握度打分，不宣称"你已经学会了" |
+| 设置卡（v2 开发中） | 设置 → 内置插件 → 学习路线：当前只做通道验证——选工作区、读/写 `learning/framework.json`，验证设置卡到会话工作区的读写链路 |
 
 ## 安装
 
@@ -45,6 +46,10 @@ pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
 ### 方式 B：本地开发链接（改一次生效一次，不用重装）
 
 ```sh
+cd dsh-skill-learning-coach
+pnpm install
+pnpm run build   # tsc + tsdown，产出 lib/（host 半 + 客户端 bundle）
+
 pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
 ```
 
@@ -78,23 +83,44 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 
 ## 工作原理
 
-零代码，靠 DSH 的 skill 加载机制生效，两件事：
+三件事：skill 怎么被挂载、怎么被执行、v2 通道怎么读写工作区：
 
-1. **挂载**：`cordis.patch.yml` 只贡献本包自带的 `skills/`。写法照本机现役的 `dsh-super-code`：
+1. **挂载**：`cordis.patch.yml` 做两件事——挂 host 半（`name: dsh-skill-learning-coach`，同时让 DSH 发现客户端 bundle），以及贡献本包自带的 `skills/`。skill 根的写法照本机现役的 `dsh-super-code`：
    用 `require.resolve('dsh-skill-learning-coach/package.json')` 反查已安装目录，而不是拿 patch
    文件位置当 skill 根（profile 层可能另存一份声明，按 patch 位置算会算到错的地方）；配
    `providerName` 独有 + `includeDefaultRoots: false`，避免重复扫描学习者的项目根与用户根。
 2. **执行**：DSH 读到 `skills/learning-coach/SKILL.md` 后，按"1 问 → 2 定 → 3 资料 → 4 现写 → 5 收口"
    五步流程走；提问脚本读 `references/intake.md`，讲义模板读 `references/materials.md`。
    skill 正文每次加载都重读文件，所以改 `SKILL.md` 立即生效、不用重装。
+3. **v2 通道**（开发中）：host 半在 `/learning-coach/api` 下注册 `state.read` / `state.write` 两条路由；
+   工作区路径由 host 按 `sessionId` 解析（`workingDirectory` 服务，回退 `session.header.cwd`），
+   **不接受客户端传来的任意路径**；写盘用原子写（临时文件 + rename），读盘先做 schema 校验，
+   非法 JSON 报明确错误而不是静默兜底。客户端设置卡调这两条路由，真源始终在磁盘上，不存 localStorage。
 
-产物只有两个 Markdown 文件，都写在学习者工作区的 `learning/` 目录下，不碰别处。
+skill 的产物只有两个 Markdown 文件，都写在学习者工作区的 `learning/` 目录下，不碰别处；
+`learning/framework.json` 是 v2 的状态文件，当前只有通道验证骨架会写它。
 
 ## 它故意不做什么
 
 - 不做逐节苏格拉底式讲解（后续的独立 skill）
 - 不记进度、不管错题本（再后续的独立 skill，依赖上一条）
 - 不批量生成整套课程讲义——一次写完十节没人读，也没法验证写得对不对
+
+（"不做逐节讲解"这条边界会在 v2 陪练循环里按用户要求放开，见下一节。）
+
+## v2 进行中
+
+v2 的目标形态是**贴身教师 + 可编辑路线框架**：AI 自生成知识框架、沿框架提问（问完默认已懂，
+说没懂只标红该节点）、每节点带资料与可验证的达标动作、卡壳档案 `misconceptions` 跨会话引用、
+8 张学习方法卡（费曼 / 主动回忆 / 间隔重复 / 交错练习 / 番茄钟 / SQ3R / 康奈尔 / 自定义）做引导式陪练；
+路线与学习方法在原生设置卡里可视化编辑，落盘到工作区 `learning/framework.json`（唯一状态源）。
+完整设计见 `docs/superpowers/specs/2026-11-06-learning-coach-v2-design.md`。
+
+**当前进度**：第一期"通道打通"已完成——设置卡能选工作区、通过 host 路由把状态原子写进该工作区并读回。
+卡里的"读状态"按钮写入的是一份验证样本，完整的学习循环（框架生成、陪练、方法卡）尚未接入；
+v1 的四问流程不依赖 `framework.json`，两边互不影响。
+
+装机与真机走查由使用者自己跑；`pnpm run build`、`pnpm test`、`pnpm run test:client-bundle` 为本包自验命令。
 
 ## 规则从哪来
 
