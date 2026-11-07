@@ -2,6 +2,12 @@
 
 让 DSH 先问、再确认、后动笔：帮你把学习路线自己讲清楚，并写出当前这一节的辅助讲义。
 
+- ❓ **问起点**：四件事逐一提问——现状 / 时间 / 达标 / 资料，每轮只问一个
+- 🗺️ **定路线**：给路线草案等你确认，确认前不落盘
+- 📚 **配资料**：用你已有的资料排先后；没有就联网找一手来源
+- 📝 **现写讲义**：只写当前这一节的一页辅助讲义，读完再走下一节
+- 🎯 **收口**：说清路线在哪、讲义在哪、下一节的第一个动作是什么
+
 零代码插件包——没有 TypeScript、没有构建、没有依赖，随包只带一份 skill bundle。
 
 ## 为什么做这个 skill
@@ -13,40 +19,76 @@ DSH 随包的 skill 只有 cordis 插件开发类和 office 文档类，没有�
 本 skill 改的是**开场动作**，不是生成更多内容：先问四件事，再给路线草案等你确认，确认后才落盘、
 才动笔写讲义。
 
-## 装它
+## 特性
 
-桌面版（`desktop` profile，日常在用这条）：
+| 能力 | 说明 |
+| --- | --- |
+| 起点四问 | 现状 / 时间 / 达标 / 资料，每轮只问一个问题，总轮数 ≤ 6；形容词不算答案，必须落到具体动作 |
+| 三选一兜底 | 某一问 6 轮内问不出，给最常见的三个选项让他挑，并说明"先按这个假设定路线，之后随时能改" |
+| 路线草案先行 | 四件东西都要有：阶段划分、每阶段结束时"能做到的事"、按真实可投入时间折算的周期、第一个具体动作；显式问"这条路线你认吗"，确认前不落盘、不写讲义 |
+| 资料双通道 | 有资料：本地路径直接读、链接用联网工具读，按路线排先后；没资料：search + fetch 找 2–3 个一手来源，附 URL 与访问日期，找不到就直说 |
+| 一页讲义模板 | 六段结构：先给问题 → 具体故事开场 → 原理 → 三道自测题 → 常见踩坑 → 来源；答案统一放页尾折叠区 |
+| 「待核实」防编造 | 讲义页首强制自标注；不确定的一律标「待核实」，不编造数字、API 名、版本行为；与官方文档冲突时以来源为准 |
+| 禁止批量生成 | 一次只写当前一节——学习者要求全部生成时，先说明为什么，然后只交当前这一页 |
+| 收口三件事 | 路线落在哪个文件、这一页讲义在哪、下一节的第一个动作是什么；不给掌握度打分，不宣称"你已经学会了" |
+
+## 安装
+
+> 以下命令中 `--profile` 按实际平台选择：`desktop`（桌面版，日常在用这条）或 `web`（浏览器版）。
+
+### 方式 A：从 GitHub 安装
 
 ```sh
-pnpm dsh plugin --profile desktop add github:<你的用户名>/dsh-skill-learning-coach
+pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
 ```
 
-本地开发（改一次生效一次，不用重装）：
+### 方式 B：本地开发链接（改一次生效一次，不用重装）
 
 ```sh
 pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
 ```
 
-装了 `web` profile 的把 `desktop` 换成 `web` 即可。装完重启 DSH；之后 skill 正文改动不必重启，
-每次加载都重读文件。
+装完重启 DSH；之后 skill 正文改动不必重启，每次加载都重读文件。
 
-**不想装插件的走法**：把 `skills/learning-coach` 整个目录复制到 `~/.dsh/skills/` 下就生效
-（DSH 会扫描这个用户根目录）。只要目录形态是 `<根>/learning-coach/SKILL.md` 就行。
+### 方式 C：不装插件，直接复制目录
 
-回滚：`pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach`，或删掉复制过去的目录。
+把 `skills/learning-coach` 整个目录复制到 `~/.dsh/skills/` 下就生效（DSH 会扫描这个用户根目录）。
+只要目录形态是 `<根>/learning-coach/SKILL.md` 就行。
 
-## 怎么用
+### 卸载 / 回滚
 
-说一句「我想学 <某个东西>」。它会问你四件事：
+```sh
+pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
+```
 
-1. 现在能独立做到哪
-2. 过去一周真花了多少时间（按真实值，不按理想计划）
-3. 学到什么程度算成了（要一件到时候能做的事）
-4. 手上已经有什么资料
+或删掉复制过去的目录。
+
+## 使用
+
+说一句「我想学 <某个东西>」（或"怎么入门 X"、"这些资料从哪看起"、"帮我规划学习"）。它会问你四件事：
+
+1. **现在能独立做到哪** —— "你现在能独立做出什么？说一件具体的事——'能改别人写的页面样式'比'了解 HTML'有用。"
+2. **过去一周真花了多少时间** —— 按上周真实值算，不按理想计划。
+3. **学到什么程度算成了** —— 要是一件到时候能做的事（能独立做出 X / 能答出某类面试题），不是"学会了"。
+4. **手上已经有什么资料** —— 书、课程、文档、本地文件路径都算。
 
 四问收齐后给一条**路线草案**等你确认；确认后写 `learning/00-路线.md`，
 并为当前这一节写一页辅助讲义到 `learning/讲义/<日期>-<主题>.md`。
 没资料时它用 DSH 自带的联网工具去找 2–3 个一手来源，并附 URL 与访问日期。
+
+## 工作原理
+
+零代码，靠 DSH 的 skill 加载机制生效，两件事：
+
+1. **挂载**：`cordis.patch.yml` 只贡献本包自带的 `skills/`。写法照本机现役的 `dsh-super-code`：
+   用 `require.resolve('dsh-skill-learning-coach/package.json')` 反查已安装目录，而不是拿 patch
+   文件位置当 skill 根（profile 层可能另存一份声明，按 patch 位置算会算到错的地方）；配
+   `providerName` 独有 + `includeDefaultRoots: false`，避免重复扫描学习者的项目根与用户根。
+2. **执行**：DSH 读到 `skills/learning-coach/SKILL.md` 后，按"1 问 → 2 定 → 3 资料 → 4 现写 → 5 收口"
+   五步流程走；提问脚本读 `references/intake.md`，讲义模板读 `references/materials.md`。
+   skill 正文每次加载都重读文件，所以改 `SKILL.md` 立即生效、不用重装。
+
+产物只有两个 Markdown 文件，都写在学习者工作区的 `learning/` 目录下，不碰别处。
 
 ## 它故意不做什么
 
@@ -59,26 +101,3 @@ pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-
 提问脚本和讲义模板不是凭空写的，来自一套已跑通的求职架构学习体系（8 周路线 + 统一讲义结构 +
 错题归因）。那套体系里"错题贴给我，我批改并沿追问链继续挖"原本只是文档里的一句话，只有恰好被
 读到才成立；本包把这类约定固化成每次都会生效的动作。
-
-## 结构
-
-```
-skills/learning-coach/
-├── SKILL.md              流程骨架：先问 → 确认 → 资料 → 现写一节一页
-└── references/
-    ├── intake.md         起点四问的提问脚本与兜底规则
-    └── materials.md      单页辅助讲义模板与自标注规则
-cordis.patch.yml          只挂载本包 skills/，不动学习者的项目根与用户根扫描
-```
-
-装载写法照本机现役的 `dsh-super-code`：用 `require.resolve('<本包>/package.json')` 反查已安装
-目录，而不是拿 patch 文件位置当 skill 根；配 `providerName` 独有 + `includeDefaultRoots: false`，
-避免重复扫描别人的根目录。
-
-## 已知未验
-
-安装与行为验证需在真实 DSH 里跑一次（本机无命令行问答入口）。若装完看不到 `learning-coach`，
-先按上面的"不想装插件的走法"验证 bundle 本身，再把 `pnpm dsh plugin ... why dsh-skill-learning-coach`
-的输出贴回来。
-
-License MIT.
