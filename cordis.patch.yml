@@ -1,7 +1,11 @@
-# dsh-skill-learning-coach bundle patch —— 只贡献本包自带的 skill，不动学习者的项目根与用户根扫描。
-# 写法照本机现役的 dsh-super-code：不拿 baseUrl 当 skill 根，而是从"已安装的包"反查目录——
-# profile 层可能另存一份声明，按 patch 文件位置算会算到错的地方。
+# dsh-skill-learning-coach bundle patch
+# 第一行挂载 host 半（两条 fenced 路由），同时让 DSH 发现本包的客户端 bundle。
+# 第二行是 v1 已实测通过的 skill 实例：从"已安装的包"反查 skills 目录，
+# 不拿 baseUrl 当 skill 根（profile 层可能另存一份声明，按 patch 位置算会算错）。
 - insert:
+    - id: dsh-skill-learning-coach
+      name: dsh-skill-learning-coach
+      config: {}
     - id: skill-learning-coach-bundled
       name: '@deepseek-ai/dsh-skill-filesystem'
       config:

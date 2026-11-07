@@ -1,23 +1,55 @@
 {
   "name": "dsh-skill-learning-coach",
-  "version": "0.1.0",
-  "description": "DSH 生态的引导学习 skill：先用提问帮学习者自己确认学习路线，再给方案与资料清单，无资料时现写本节一页辅助讲义。零代码，只随包提供 SKILL.md bundle。",
+  "version": "0.2.0",
+  "description": "DSH 引导学习插件：AI 自生成知识框架、沿框架提问、默认已懂只标缺口；路线与学习方法在原生设置卡里可视化编辑并落盘到工作区，按目的定达标标准，带卡壳档案的引导式陪练。",
   "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
   "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ],
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "files": [
+    "lib/**/*.js",
+    "lib/types/**/*.d.ts",
     "cordis.patch.yml",
     "skills/**",
+    "src",
     "docs/**",
     "README.md",
     "LICENSE"
   ],
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    }
+  "scripts": {
+    "build": "node -e \"fs.rmSync('lib',{recursive:true,force:true})\" && tsc -p tsconfig.json && tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm run build && node --test",
+    "test:client-bundle": "node scripts/check-client-bundle.mjs",
+    "prepack": "pnpm run build && pnpm run test:client-bundle"
   },
   "keywords": [
     "dsh",
@@ -25,7 +57,35 @@
     "skill",
     "learning",
     "study",
-    "roadmap"
+    "roadmap",
+    "feynman",
+    "client-plugin"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-api-session-controller": "^0.2.1-rc.5",
+    "@deepseek-ai/dsh-client-locale": "^0.2.1-rc.5",
+    "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-settings": "^0.2.1-rc.5",
+    "@deepseek-ai/dsh-client-ui-settings-plugins": "^0.2.1-rc.5",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.2.1-rc.5",
+    "@types/node": "^24.0.0",
+    "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.1",
+    "lightningcss": "^1.32.0",
+    "react": "^18.2.0",
+    "react-dom": "18.2.0",
+    "tsdown": "^0.22.2",
+    "typescript": "^5.6.0"
+  },
+  "packageManager": "pnpm@11.7.0"
 }
