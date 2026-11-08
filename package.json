@@ -1,7 +1,7 @@
 {
   "name": "dsh-skill-learning-coach",
-  "version": "0.2.0",
-  "description": "DSH 引导学习插件：AI 自生成知识框架、沿框架提问、默认已懂只标缺口；路线与学习方法在原生设置卡里可视化编辑并落盘到工作区，按目的定达标标准，带卡壳档案的引导式陪练。",
+  "version": "0.2.1",
+  "description": "DSH 学习陪练插件（dsh-plugin）：AI 自生成知识框架、沿路线提问、默认已懂只标缺口；路线与八种学习法在原生设置卡可视化编辑并落盘到工作区，按目的定达标标准，卡壳跨会话引用。",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -17,9 +17,33 @@
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wanlte/dsh-skill-learning-coach.git"
+  },
+  "homepage": "https://github.com/wanlte/dsh-skill-learning-coach#readme",
+  "bugs": {
+    "url": "https://github.com/wanlte/dsh-skill-learning-coach/issues"
+  },
+  "author": "wanlte (https://github.com/wanlte)",
+  "license": "MIT",
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "deepseek",
+    "skill",
+    "plugin",
+    "learning",
+    "study",
+    "tutor",
+    "roadmap",
+    "feynman",
+    "spaced-repetition"
+  ],
   "dsh": {
     "client": {
       "inject": [
@@ -40,10 +64,15 @@
     "cordis.patch.yml",
     "skills/**",
     "src",
-    "docs/**",
     "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "node -e \"fs.rmSync('lib',{recursive:true,force:true})\" && tsc -p tsconfig.json && tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -52,17 +81,6 @@
     "pack:check": "node scripts/check-package.mjs",
     "prepack": "pnpm run build && pnpm run test:client-bundle"
   },
-  "keywords": [
-    "dsh",
-    "deepseek-harness",
-    "skill",
-    "learning",
-    "study",
-    "roadmap",
-    "feynman",
-    "client-plugin"
-  ],
-  "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5"
   },
@@ -86,7 +104,7 @@
     "react": "^18.2.0",
     "react-dom": "18.2.0",
     "tsdown": "^0.22.2",
-    "typescript": "^5.6.0"
+    "typescript": "^5.7.0"
   },
   "packageManager": "pnpm@11.7.0"
 }
