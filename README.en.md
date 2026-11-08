@@ -35,6 +35,14 @@ pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-
 **Restart DSH** after installing — the host half and client bundle load at boot. Markdown under `skills/` is re-read on every load and needs no restart.
 Settings gains a first-level sidebar entry — **Learning roadmap** (「学习路线」 in the Chinese UI), next to Models. If it is not there, the plugin did not load.
 
+Straight from GitHub (public repo, no login) also works:
+
+```sh
+pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
+```
+
+The installer pays three costs: pnpm refuses to run build scripts of git dependencies by default (`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` unless the package is listed under `allowBuilds` in `pnpm-workspace.yaml`); the bundled skill is flagged "awaiting approval" and needs `pnpm approve`; and the package is built locally from source (~40 s), which needs GitHub reachability plus a full Node toolchain. The npm path is a prebuilt tarball: no scripts, a few seconds.
+
 ```sh
 pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 ```

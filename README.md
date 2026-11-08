@@ -37,6 +37,14 @@ pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-
 装完**重启 DSH**：host 半与客户端 bundle 要重启才加载。之后只改 `skills/` 里的 Markdown 不必重启。
 设置里侧边栏一级会多一项「学习路线」，与「模型」同列；没有这一项就说明没装上。
 
+也能直接从 GitHub 装（仓库公开，无需登录）：
+
+```sh
+pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
+```
+
+代价有三个，都是在装的人那边付：pnpm 默认拒绝执行 git 依赖的构建脚本（不放行就 `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`，要在 `pnpm-workspace.yaml` 的 `allowBuilds` 里加这个包）；装完包内 skill 会被标成 "awaiting approval"，要 `pnpm approve` 放行；以及本地要从源码构建一次（约 40 秒），依赖 GitHub 可达与完整 Node 工具链。npm 那条是预构建 tarball，不跑脚本、几秒钟。
+
 卸载 / 回滚：
 
 ```sh
