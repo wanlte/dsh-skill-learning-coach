@@ -49,6 +49,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm run build && node --test",
     "test:client-bundle": "node scripts/check-client-bundle.mjs",
+    "pack:check": "node scripts/check-package.mjs",
     "prepack": "pnpm run build && pnpm run test:client-bundle"
   },
   "keywords": [
