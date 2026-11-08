@@ -1,26 +1,122 @@
-# dsh-skill-learning-coach · DSH 贴身学习教师
+# dsh-skill-learning-coach
 
-一个记得你卡在哪、按你的目的定达标标准、并且真的带你练的学习插件。
-路线框架与学习方法在 DSH 原生设置卡里可视化编辑，改动落盘到工作区，下次会话 AI 读得到。
+**一个记得你卡在哪的 DSH 学习陪练。** 路线在设置卡里改，进度在盘上，学没学会由你的产出说了算。
 
-## 三块，各自职责单一
+[![npm version](https://img.shields.io/npm/v/dsh-skill-learning-coach.svg)](https://www.npmjs.com/package/dsh-skill-learning-coach)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-skill-learning-coach.svg)](https://www.npmjs.com/package/dsh-skill-learning-coach)
+[![CI](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+学习类 AI 工具大多停在"给你一份看起来很完整的计划"。第二次对话，它忘了你学到哪；第八次对话，它还在讲第一章。
+这个包把状态从聊天记录里搬到磁盘上，把"学会了"从 AI 的一句夸奖换成一件你不看资料也能做出来的事。
+
+- **状态外置**：`<工作区>/learning/framework.json` 是唯一真源。换会话、换模型、断了重连，都从同一处续。
+- **无提示产出才算过**：AI 先撤掉提示，你自己做。给到答案就标 `gap`，这一节重学。
+- **卡壳档案只追加**：你上次误解的那一点，下次开场它先提。这是"贴身"的物理载体，不是装饰。
+- **按目的定达标**：工作 / 考试 / 兴趣 / 转行，达标动作的形态不同——能跑的东西，还是一道限时真题。
+
+> 状态：`0.2.1`。`tsc` 无错、43 项自动测试全绿、打包清单自检通过；下面 13 条真机项需要在装机的机器上复核。
+
+## 装
+
+```sh
+# 桌面版 / 网页版，按平台换 --profile
+pnpm dsh plugin --profile desktop add dsh-skill-learning-coach
+pnpm dsh plugin --profile web     add dsh-skill-learning-coach
+
+# 没有本地 dsh 命令时
+npx @deepseek-ai/dsh plugin add dsh-skill-learning-coach
+```
+
+改包想立刻看到效果，用本地链接（改一次生效一次）：
+
+```sh
+pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
+```
+
+装完**重启 DSH**：host 半与客户端 bundle 要重启才加载。之后只改 `skills/` 里的 Markdown 不必重启。
+设置里侧边栏一级会多一项「学习路线」，与「模型」同列；没有这一项就说明没装上。
+
+卸载 / 回滚：
+
+```sh
+pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
+```
+
+工作区里的 `learning/framework.json` 与讲义不会被卸载删除，需要时自己删。
+
+## 用
+
+**第一次**：说「我想学 X」。它先问**目的**（工作 / 考试 / 兴趣 / 转行，加期限与目标岗位或考试名），再问现状（要具体动作，不要"了解"）、过去一周真花了多少分钟、手上有什么资料。然后生成知识框架，沿框架一块一块问。
+**问完默认你已懂**；你说没懂，它只标红那一个节点。
+
+**之后每次**：说「继续学」。它只读当前节点，先引用你上次的卡壳，给行动清单，再按你选的方法带练：
+你先做 → 卡壳给阶梯提示（方向 → 半个步骤 → 答案）→ 撤掉提示，让你独立产出那件 `mastery`。
+
+**一节收口**：报三件事（路线在哪 / 这页讲义在哪 / 下一节第一个动作），并提醒开新会话。状态在盘上，断了能续。
+
+## 和"AI 家教"哪里不一样
+
+| | 常见 AI 家教 | 这个包 |
+| --- | --- | --- |
+| 学习状态 | 在聊天上下文里，换会话即失忆 | 一个 JSON 文件，host 路由读写，换会话照读 |
+| 路线 | AI 生成完就冻结，改不了 | 设置卡里增 / 删 / 选为当前 / 标没懂，改完立刻落盘 |
+| 学过没有 | AI 复述一遍就算过 | 撤掉提示后的独立产出，才算 `done` |
+| 卡壳 | 当轮聊完就丢 | `misconceptions` 只追加，下次开场必须引用 |
+| 达标标准 | "理解 XX" | 一件可验证的动作，形态随 `purpose` 变 |
+| token | 每轮重放整段对话里的计划 | 每轮只读当前节点 + 当前那一份方法卡 |
+
+## 形态：三块，职责单一
 
 | 块 | 位置 | 干什么 |
 | --- | --- | --- |
-| 设置卡 | 设置 → 学习路线（侧边栏一级，与「模型」同列） | 改目的与每周真实时间；路线树增 / 删 / 选为当前 / 标没懂；编辑每节的资料与达标标准；8 张学习方法卡单选 + 自定义 |
+| 设置卡 | 设置 → 学习路线（侧边栏一级） | 改目的与每周真实时间；路线树增 / 删 / 选为当前 / 标没懂；编辑每节的资料与达标标准；8 张学习方法卡单选 + 自定义 |
 | host 半 | `lib/index.js` | 一条 fenced 路由 `/learning-coach/api`，两个方法 `state.read` / `state.write`；工作区路径由 host 从会话解析，客户端只传 `sessionId` |
-| skill bundle | `skills/learning-coach/` | 38 行的路由 `SKILL.md` + 按需读的 `references/`；AI 每轮只读当前节点 |
+| skill bundle | `skills/learning-coach/` | 38 行路由 `SKILL.md` + 按需读的 `references/`；AI 每轮只读当前节点 |
 
-渲染全在客户端，AI 零 output token。状态真源只有磁盘上那一个 JSON 文件，设置卡不存 localStorage。
-「内置插件」设置页里不再出现同名 tab——v2 只有侧边栏这一个入口。
+渲染全在客户端，AI 零 output token。设置卡不存 localStorage，状态真源只有磁盘上那一个 JSON。
+"内置插件"设置页里没有同名 tab——只有侧边栏这一个入口。
 
 ## 状态与产物
 
 - `<工作区>/learning/framework.json` —— 唯一状态源：目的、每周分钟数、方法、当前节、整棵框架树
 - `<工作区>/learning/讲义/<YYYY-MM-DD>-<节点标题>.md` —— 一次一页，禁止批量生成
 
-每个节点带三件东西：`materials`（资料 + 读到什么程度算够）、`mastery`（一件可验证的动作）、`misconceptions`（卡壳档案，只追加）。
-卡壳档案下次会话必须被引用——这是"贴身"的物理载体，不是装饰。
+```json
+{
+  "version": 1,
+  "topic": "计算机网络",
+  "purpose": { "kind": "job", "detail": "后端求职面试", "deadline": "2026-12-20" },
+  "weeklyMinutes": 420,
+  "method": "feynman",
+  "customMethod": null,
+  "current": "3.2",
+  "nodes": [
+    {
+      "id": "3.2",
+      "parent": "3",
+      "title": "TCP 三次握手",
+      "status": "gap",
+      "materials": [
+        { "kind": "url", "ref": "https://www.rfc-editor.org/rfc/rfc9293", "enough": "能画出三段报文交换图" }
+      ],
+      "mastery": "不看资料，向新人讲清为什么不是两次，并说出第三次握手防的是什么",
+      "misconceptions": ["把'确认收到'当成第三次握手的唯一目的"],
+      "reviewOn": null,
+      "lecture": "learning/讲义/2026-11-06-TCP三次握手.md",
+      "minutesSpent": 0
+    }
+  ]
+}
+```
+
+字段守则：
+
+- `status` 状态机：`pending` → 问完 `assumed-known` → 说没懂 `gap` → 出讲义 `drafted` → 无提示产出 `done`
+- `mastery` 必须是一件可验证的动作；"读完某章""理解某概念"不许落盘
+- `materials[].enough` 必须写清读到什么程度算够
+- `misconceptions` 只追加、不由 AI 清空；写盘时被改写直接拒写
+- 写盘走原子写（先 `.tmp` 再 rename）；半截 JSON 读出来报明确错误，不静默重置
 
 ## 学习方法（8 张卡）
 
@@ -28,48 +124,6 @@
 
 方法库随包写死、按方法分片，选哪个 AI 才读哪个。自定义卡填自己的方法，AI 按其描述执行。
 间隔重复的复习日由 AI 按固定表算（达标当日 +1 / +3 / +7 / +14 / +30 天），没有调度器、不起后台进程。
-
-## 安装
-
-> `--profile` 按实际平台选：`desktop`（桌面版）或 `web`（浏览器版）。
-
-### 方式 A：本地开发链接（改一次生效一次）
-
-```sh
-pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
-```
-
-### 方式 B：从 tarball 安装
-
-```sh
-pnpm pack
-pnpm dsh plugin --profile desktop add file:./dsh-skill-learning-coach-0.2.0.tgz
-```
-
-装完**重启 DSH**：host 半与客户端 bundle 要重启才加载。之后只改 `skills/` 里的 Markdown 不必重启，每次加载都重读文件。
-
-设置卡需要插件安装才出现。只把 `skills/` 复制到 `~/.dsh/skills/` 不会有设置卡，也不会有落盘路由——v2 不再支持那种零代码走法。
-
-### 卸载 / 回滚
-
-```sh
-pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
-```
-
-要退回 v1：把仓库切到 v2 之前的提交 `85f4bbc`，再重新执行方式 A。
-工作区里的 `learning/framework.json` 与讲义不会被卸载删除，需要时自己删。
-
-## 使用
-
-第一次说「我想学 X」。它会先问**目的**（工作 / 考试 / 兴趣 / 转行 + 期限 + 目标岗位或考试名），
-再问现状（要具体动作）、过去一周真花了多少分钟、手上有什么资料，然后生成知识框架、沿框架一块一块问。
-**问完默认你已懂**；你说没懂，它只标红那一个节点。
-
-之后每次说「继续学」。它只读当前节点，先引用你上次的卡壳，给行动清单，再按你选的方法引导陪练：
-你先做 → 卡壳给阶梯提示（方向 → 半个步骤 → 答案）→ 撤掉提示让你独立产出那件 `mastery`。
-**给到答案就不算达标**，那一节标 `gap` 要重学。
-
-一节收口时报三件事（路线在哪 / 这页讲义在哪 / 下一节第一个动作），并提醒你开新会话——状态在盘上，断了能续。
 
 ## 真机走查清单
 
@@ -118,6 +172,14 @@ pnpm run pack:check          # tarball 内容清单自检
 
 `src/shared/framework.ts` 零 import，host 与 client 共用；client 不得 import 任何 host 文件（会把 Node 内置拖进浏览器 bundle，纯度门会炸）。
 
+## 发布与生态收录
+
+`dshai.org` / `dshmarket` 这类 registry 不人工收录，而是**自动**抓两处：GitHub 仓库的 `dsh-plugin` topic，与 npm 包上的 `dsh-plugin` 关键词。缺一个就搜不到。
+
+本包已备好：`keywords` 含 `dsh-plugin`、`repository` / `homepage` / `bugs` 齐、`publishConfig` 锁定官方 registry、`files` 剔除了内部计划文档。
+推上去的操作步骤、市场文案与验证方法见 [RELEASING.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/RELEASING.md)。
+版本变更见 [CHANGELOG.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/CHANGELOG.md)。
+
 ## 它故意不做什么
 
 - 错题本与掌握度打分
@@ -126,7 +188,13 @@ pnpm run pack:check          # tarball 内容清单自检
 - 联网抓取付费或需登录的资料
 - HTML 页面与本地服务：全部可视化收进原生设置卡
 
-## 从 v1 升级
+## English
 
-v1 的 `learning/00-路线.md` 不迁移、留着不动；v2 的路线真源是 `learning/framework.json`。
-v1 的 `references/intake.md` 已删除，被 `first-run.md` 取代。
+A DSH plugin that remembers where you got stuck. Roadmap and learning method are edited in a native settings card and persisted to the workspace; "learned" means an unprompted reproduction, not a compliment from the model.
+
+Install: `pnpm dsh plugin --profile desktop add dsh-skill-learning-coach`, restart DSH, then open Settings → 学习路线.
+Full English guide: [README.en.md](README.en.md).
+
+## License
+
+MIT © wanlte
