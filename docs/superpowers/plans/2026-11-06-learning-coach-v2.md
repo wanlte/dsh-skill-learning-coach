@@ -4,11 +4,13 @@
 
 **Goal:** 把 learning-coach 从"问四问给路线"升级成记得学习者卡在哪、按目的定达标标准、并且真的带练的贴身教师；路线框架与学习方法在 DSH 原生设置卡里可视化编辑，落盘到工作区，下次会话 AI 读得到。
 
-**Architecture:** 一个 npm 包，三块职责分离。**host 半**只注册一条 fenced 前缀路由 `/learning-coach/api`，两个方法 `state.read` / `state.write`，读写 `<会话工作区>/learning/framework.json`（原子写 + schema 校验）。**客户端半**在 `settings.plugins.tab` 注册一张设置卡，所有渲染发生在浏览器，AI 零 output token；改动立刻 POST 给 host。**skill bundle** 是短路由 `SKILL.md` + 按需读的 `references/`，AI 每轮只读当前节点。状态真源只有磁盘上那一个 JSON 文件，客户端不存 localStorage。
+**Architecture:** 一个 npm 包，三块职责分离。**host 半**只注册一条 fenced 前缀路由 `/learning-coach/api`，两个方法 `state.read` / `state.write`，读写 `<会话工作区>/learning/framework.json`（原子写 + schema 校验）。**客户端半**在 `settings.section`（设置侧边栏一级页面，与模型等并列）注册一张设置卡，所有渲染发生在浏览器，AI 零 output token；改动立刻 POST 给 host。**skill bundle** 是短路由 `SKILL.md` + 按需读的 `references/`，AI 每轮只读当前节点。状态真源只有磁盘上那一个 JSON 文件，客户端不存 localStorage。
 
 **Tech Stack:** TypeScript 5.6（strict + noUncheckedIndexedAccess）、React 18、cordis ~4.0.5、tsc（host + 类型）+ tsdown/rolldown（客户端 CJS closure bundle）、lightningcss（CSS Modules）、`node --test`（零额外测试依赖）。
 
 **Spec:** `docs/superpowers/specs/2026-11-06-learning-coach-v2-design.md`
+
+> **2026-11-08 修订（用户已批准，spec §13）：** 设置卡入口从 `settings.plugins.tab`（"设置 → 内置插件"页内的 tab）迁到 `settings.section`（设置侧边栏一级页面，与模型等并列）。Task 1 已按原设计执行完毕，正文保留原貌作历史记录；迁移落点在 Task 4（Step 3 静态测试 → Step 4 卡片接住 `close` → Step 5 迁 `src/client/index.ts`），`SettingsCardProps` 随之增加 owner 注入的 `close`，测试总数 25 → 27。Task 1 正文中的 plugins.tab 注册（`ctx.slots.inject('settings.plugins.tab'` 那一段）由 Task 4 替换，**不要回改 Task 1**。
 
 ## Global Constraints
 
@@ -35,8 +37,8 @@
 
 这些是读本机现役包源码得到的事实，附证据位置。实施时直接按此写代码。
 
-1. **`settings.plugins.tab` 是 `scope: 'root'`，owner props 故意为空。**
-   证据：`@deepseek-ai/dsh-client-ui-settings/lib/types/client/contract/slots.d.ts:86-90` 与 `:133-136`。
+1. **一级设置页面注册进 `settings.section`（`scope: 'root'`，list），owner props 是 `{ close: () => void }`。**
+   证据：`@deepseek-ai/dsh-client-ui-settings/lib/types/client/contract/slots.d.ts:73-77`（`settings.section` 声明）与 `:154-157`（`SettingsSectionOwnerProps` 只有 `close`）。模型页（ui-settings-models）等同级页面即注册于此；`settings.plugins.tab`（:86-90，owner props 为空）只是"内置插件"区内的 tab——Task 1 探针注册在那，Task 4 迁到 `settings.section`（spec §13）。
    `ScopeStandardProps<'root'>` = `object & GlobalStandardProps`（`dsh-client-ui-slots/lib/types/index.d.ts:221`），**root 槽拿不到 `sessionId`**。
    → 所以设置卡必须自己提供一个"工作区选择器"。这就是 spec §10 那一环的答案。
 
@@ -63,7 +65,7 @@
    Electron 页面是 `dsh-app://app/`，shell 把非静态路径同源转发给 host；插件路由不发 CORS 头，跨 origin fetch 会被浏览器直接拒。相对路径解析 against `document.baseURI`（带尾斜杠）同时覆盖反向代理前缀。
 
 7. **设置卡注册与构建管线照抄 dsh-voice-announcer。**
-   `src/client/index.ts:23-45`（`ctx.locale.register` + `ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({...}, Component))`）、`tsdown.config.ts`（CLIENT_EXTERNALS / 纯度门 / CSS Modules / `window.__ModuleLoader__.load` banner）、`package.json` 的 `dsh.client.inject` 四项、`scripts/check-client-bundle.mjs`。
+   `src/client/index.ts:23-45`（`ctx.locale.register` + `ctx.slots.inject('settings.section', () => ctx.slots.register({...}, Component))`）、`tsdown.config.ts`（CLIENT_EXTERNALS / 纯度门 / CSS Modules / `window.__ModuleLoader__.load` banner）、`package.json` 的 `dsh.client.inject` 四项、`scripts/check-client-bundle.mjs`。voice-announcer 注册的是 plugins.tab，本包按 spec §13 用 settings.section——注册写法相同，slot 键不同。
    **它的 localStorage 偏好不能抄**——本包真源在磁盘。
 
 8. **不需要 `settings.update`，因此避开 `.volatile()` 陷阱。**
@@ -96,10 +98,11 @@
 | `src/client/SettingsCard.tsx` | 设置卡本体 | 1 探针 → 4 目的/方法 → 5 框架树 |
 | `src/client/SettingsCard.module.css` | 卡片样式，用 DSH 主题变量 | 4 |
 | `src/client/css-modules.d.ts` | `*.module.css` 的类型声明 | 1 |
-| `src/client/index.ts` | 客户端入口：注册字典 + 注册设置 tab | 1 |
+| `src/client/index.ts` | 客户端入口：注册字典 + 注册设置侧边栏一级页面（`settings.section`） | 1 建（plugins.tab），4 迁入口 |
 | `scripts/check-client-bundle.mjs` | 打包后扫描 `require()`，非模块表导入即失败 | 1 |
 | `scripts/check-package.mjs` | tarball 内容清单自检：13 份 skill Markdown / 8 份方法卡 / 无 HTML | 9 |
 | `tests/session-cwd.test.mjs` | resolveCwd 三级回落 + 拒绝未知会话 | 1 |
+| `tests/settings-entry.test.mjs` | 入口静态断言：注册 `settings.section`、无 `settings.plugins.tab` | 4 |
 | `tests/framework.test.mjs` | 模型校验器 + 变更助手 + 间隔表 | 2 |
 | `tests/state.test.mjs` | 包含性检查 / 半截 JSON 报错 / 原子写 / 卡壳只追加 | 3 |
 | `tests/skill-bundle.test.mjs` | SKILL.md 预算 / skills 只有 md / 六问目的优先 / framework 覆盖 | 6 |
@@ -1767,14 +1770,15 @@ git -C F:/work/dsh-skill/dsh-skill-learning-coach commit -m "feat: 落盘前校�
 ### Task 4: 设置卡——工作区、目的、时间、8 张方法卡
 
 **Files:**
-- Modify: `src/client/SettingsCard.tsx`（整份替换探针版）、`src/client/locales.ts`（整份替换）
-- Create: `src/client/SettingsCard.module.css`
+- Modify: `src/client/SettingsCard.tsx`（整份替换探针版）、`src/client/locales.ts`（整份替换）、`src/client/index.ts`（注册目标 `settings.plugins.tab` → `settings.section`，删旧注册）
+- Create: `src/client/SettingsCard.module.css`、`tests/settings-entry.test.mjs`
 
 **Interfaces:**
 - Consumes: Task 1 的 `readState` / `saveState` / `Context`；Task 2 的 `METHOD_IDS` / `PURPOSE_KINDS` / `emptyFramework` / `parseFramework` / `pickCurrent` / `workspaceOptions` 与类型 `Framework` / `MethodId` / `PurposeKind` / `NodeStatus`。
-- Produces: `SettingsCardProps = PropsLocale<'learning.coach'> & { ctx: Context }`；locale 命名空间 `learning.coach` 的完整字典（Task 5 直接用其中 `node*` / `material*` / `mastery*` 等键，不再新增键）；CSS 类名 `card / field / label / input / hint / error / button / section / tree / node / nodeCurrent / nodeId / nodeTitle / badge / methods / method / methodOn / methodName / methodDesc`（Task 5 追加 `nodeActions / nodeBody / material / mislist`）。
+- Produces: `SettingsCardProps = PropsLocale<'learning.coach'> & { ctx: Context; close: () => void }`（`close` 是 `settings.section` 的 owner 注入，spec §13）；locale 命名空间 `learning.coach` 的完整字典（Task 5 直接用其中 `node*` / `material*` / `mastery*` 等键，不再新增键）；CSS 类名 `card / field / label / input / hint / error / button / section / tree / node / nodeCurrent / nodeId / nodeTitle / badge / methods / method / methodOn / methodName / methodDesc`（Task 5 追加 `nodeActions / nodeBody / material / mislist`）。
 
 **设计决定（实施者照此做，不要自行加 Save 按钮）：**
+- 入口迁移（spec §13）：注册目标改为 `settings.section`，`id: 'learning-coach'` / `order: 30` / `label: () => t('settingsTitle')`；删除 plugins.tab 注册，只留一个入口。`SettingsCardProps` 增加 owner 注入的 `close`，空态的"去开会话"按钮调用它。**先让卡片接住 `close`（Step 4）再迁入口（Step 5）**——反序会让 tsc 报组件类型不匹配。
 - 离散操作（下拉、方法卡、按钮）**改动即写盘**；文本/数字/日期输入**失焦即写盘**（`TextField` 内部持有局部文本，`onBlur` 才 commit），避免每敲一个字就发一次请求。
 - `commit` 先用 `parseFramework` 本地校验，不合法就只显示错误、不发请求。这样"点自定义但还没填描述"不会往磁盘写非法状态。
 - 写盘失败时**保留用户的 draft**并显示错误 + 重试按钮，不静默回滚（回滚会吞掉用户刚打的字）。
@@ -1796,6 +1800,7 @@ export const zh = {
   path: '状态文件',
   emptyHint: '这个工作区还没有路线框架。在会话里说「我想学 X」，AI 会问清目的再生成；也可以先在这里建一个空的自己填。',
   createEmpty: '建一个空框架',
+  goToSession: '去开会话',
   defaultTopic: '我的学习主题',
   topic: '学什么',
   purpose: '为什么学',
@@ -1869,6 +1874,7 @@ export const en: Record<keyof typeof zh, string> = {
   path: 'State file',
   emptyHint: 'No roadmap in this workspace yet. Say "I want to learn X" in a session and the coach will ask your purpose first, then generate one. Or create an empty one here.',
   createEmpty: 'Create empty roadmap',
+  goToSession: 'Open a session',
   defaultTopic: 'My topic',
   topic: 'Topic',
   purpose: 'Purpose',
@@ -2109,9 +2115,35 @@ export const en: Record<keyof typeof zh, string> = {
 }
 ```
 
-- [ ] **Step 3: 整份替换设置卡**
+- [ ] **Step 3: 写入口静态测试（先红）**
 
-整份替换 `src/client/SettingsCard.tsx`：
+创建 `tests/settings-entry.test.mjs`（静态断言锁住 spec §13 的入口迁移，防回归）：
+
+```js
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import { test } from 'node:test'
+
+const source = await readFile(new URL('../src/client/index.ts', import.meta.url), 'utf8')
+
+test('客户端入口注册 settings.section 一级设置页面', () => {
+  assert.match(source, /slots\.inject\('settings\.section'/)
+  assert.match(source, /name: 'settings\.section'/)
+  assert.match(source, /id: 'learning-coach'/)
+  assert.match(source, /order: 30/)
+})
+
+test('不再注册 settings.plugins.tab（内置插件页内无同名 tab）', () => {
+  assert.doesNotMatch(source, /settings\.plugins\.tab/)
+})
+```
+
+Run：`node --test tests/settings-entry.test.mjs`
+Expected: FAIL——Task 1 的 `src/client/index.ts` 还注册着 `settings.plugins.tab`，两条都红。记下失败信息。
+
+- [ ] **Step 4: 整份替换设置卡**
+
+整份替换 `src/client/SettingsCard.tsx`（相对本 Task 初版全文的两处变化已写进下面：props 增加 owner 注入的 `close`；空态加"去开会话"按钮）：
 
 ```tsx
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
@@ -2133,7 +2165,7 @@ import {
 import type { zh } from './locales.ts'
 import css from './SettingsCard.module.css'
 
-export type SettingsCardProps = PropsLocale<'learning.coach'> & { ctx: Context }
+export type SettingsCardProps = PropsLocale<'learning.coach'> & { ctx: Context; close: () => void }
 
 type LocaleKey = keyof typeof zh
 
@@ -2206,7 +2238,7 @@ interface LoadState {
   error: string
 }
 
-export function SettingsCard({ t, ctx }: SettingsCardProps): JSX.Element {
+export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element {
   const subscribe = useCallback((fn: () => void) => ctx.sessions.list.subscribe(fn), [ctx])
   const snapshot = useCallback(() => ctx.sessions.list.getSnapshot(), [ctx])
   const list = useSyncExternalStore(subscribe, snapshot)
@@ -2286,6 +2318,7 @@ export function SettingsCard({ t, ctx }: SettingsCardProps): JSX.Element {
         <div className={css.section}>
           <p className={css.hint}>{t('emptyHint')}</p>
           <button type="button" className={css.button} onClick={() => commit(emptyFramework(t('defaultTopic')))}>{t('createEmpty')}</button>
+          <button type="button" className={css.button} onClick={close}>{t('goToSession')}</button>
         </div>
       ) : null}
 
@@ -2372,18 +2405,49 @@ export function SettingsCard({ t, ctx }: SettingsCardProps): JSX.Element {
 }
 ```
 
-- [ ] **Step 4: 构建 + 纯度门 + 全部测试**
+- [ ] **Step 5: 迁入口到 settings.section**
+
+整份替换 `src/client/index.ts`（Task 1 的 plugins.tab 注册迁到设置侧边栏一级页面；spec §13）：
+
+```ts
+import type { Context } from './context-types.ts'
+import { SettingsCard } from './SettingsCard.tsx'
+import { en, zh } from './locales.ts'
+
+export const name = 'dsh-skill-learning-coach-client'
+
+export const inject = ['slots', 'locale', 'sessions']
+
+export const LOCALE_NS = 'learning.coach'
+
+export function apply(ctx: Context): void {
+  ctx.effect(() => ctx.locale.register(LOCALE_NS, { zh, en }), 'dsh-skill-learning-coach: dictionaries')
+  const t = ctx.locale.bind(LOCALE_NS)
+  ctx.effect(() => ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
+    id: 'learning-coach',
+    order: 30,
+    label: () => t('settingsTitle'),
+    locale: LOCALE_NS,
+    inject: () => ({ ctx }),
+  }, SettingsCard)), 'dsh-skill-learning-coach: settings section')
+}
+```
+
+**顺序约束：Step 4 必须在本步之前完成**——`settings.section` 的 owner props 含 `close`，探针版组件没收这个 prop，先迁入口会让 `tsc` 报组件类型不匹配（`register` 的组件参数要求接住全部 composed props）。
+
+- [ ] **Step 6: 构建 + 纯度门 + 全部测试**
 
 Run：`pnpm run test && pnpm run test:client-bundle`
-Expected: 25 个测试全绿；bundle 检查通过，forbidden 为空。CSS Modules 被内联成 `injectTag`，不产生新 require。
+Expected: 27 个测试全绿（Task 1-3 的 25 + 入口静态 2）；bundle 检查通过，forbidden 为空。CSS Modules 被内联成 `injectTag`，不产生新 require。
 
 若 tsc 报 `css` 上不存在某个类名：`css-modules.d.ts` 把它声明成 `Record<string, string>`，所以不会报名字错；真报错通常是 `css` 默认导入缺失——确认 `src/client/css-modules.d.ts` 在 `src` 的 include 范围内。
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 7: 提交**
 
 ```bash
-git -C F:/work/dsh-skill/dsh-skill-learning-coach add src/client/SettingsCard.tsx src/client/SettingsCard.module.css src/client/locales.ts
-git -C F:/work/dsh-skill/dsh-skill-learning-coach commit -m "feat: 设置卡可改目的、时间与学习方法并即时落盘"
+git -C F:/work/dsh-skill/dsh-skill-learning-coach add src/client/index.ts src/client/SettingsCard.tsx src/client/SettingsCard.module.css src/client/locales.ts tests/settings-entry.test.mjs
+git -C F:/work/dsh-skill/dsh-skill-learning-coach commit -m "feat: 设置卡迁到设置侧边栏一级页面，可改目的、时间与学习方法并即时落盘"
 ```
 
 ---
@@ -2590,7 +2654,7 @@ const MATERIAL_KINDS_UI: readonly MaterialKind[] = ['url', 'file', 'book']
 - [ ] **Step 3: 构建 + 全部测试 + 逐条对着 spec §11.1 自查**
 
 Run：`pnpm run test && pnpm run test:client-bundle`
-Expected: 25 个测试全绿；bundle 检查通过。
+Expected: 27 个测试全绿；bundle 检查通过。
 
 Run：`npx tsc -p tsconfig.json --noEmit`
 Expected: 无输出。特别确认 `MATERIAL_LABEL` / `STATUS_LABEL` / `METHOD_LABEL` / `PURPOSE_LABEL` 四个 Record 的键覆盖了各自联合类型的全部成员（漏一个就编译错，这是故意的）。
@@ -2909,7 +2973,7 @@ git -C F:/work/dsh-skill/dsh-skill-learning-coach rm skills/learning-coach/refer
 - [ ] **Step 7: 跑测试确认全绿**
 
 Run：`pnpm run test`
-Expected: PASS —原有 25 个 + 本 Task 6 个 = 31 个测试全绿。
+Expected: PASS —原有 27 个 + 本 Task 6 个 = 33 个测试全绿。
 特别确认 `description ≤80 字` 与 `正文 ≤60 行` 两条：Step 3 的正文是 38 行、description 是 69 字，都在预算内。若你改过 prose 导致超线，**删字而不是放宽测试**。
 
 - [ ] **Step 8: 提交**
@@ -3138,7 +3202,7 @@ JSON 模型里没有复习轮次字段，**这一行就是轮次的唯一载体*
 - [ ] **Step 5: 跑测试确认全绿**
 
 Run：`pnpm run test`
-Expected: PASS —31 + 5 = 36 个测试全绿。
+Expected: PASS —33 + 5 = 38 个测试全绿。
 
 - [ ] **Step 6: 提交**
 
@@ -3500,7 +3564,7 @@ Expected: FAIL —第一条就 ENOENT（`references/methods/` 目录不存在）
 - [ ] **Step 4: 跑测试确认全绿**
 
 Run：`pnpm run test`
-Expected: PASS —36 + 5 = 41 个测试全绿。链接可达性那条会检查 13 份 Markdown 里的全部相对链接（SKILL.md 4 条 + first-run 2 条 + materials 1 条 + spaced 2 条 + pomodoro 1 条 = 10 条，≥8）。
+Expected: PASS —38 + 5 = 43 个测试全绿。链接可达性那条会检查 13 份 Markdown 里的全部相对链接（SKILL.md 4 条 + first-run 2 条 + materials 1 条 + spaced 2 条 + pomodoro 1 条 = 10 条，≥8）。
 
 行数自查（每份都必须 ≤40）：feynman 22、recall 21、spaced 31、interleave 26、pomodoro 26、sq3r 25、cornell 21、custom 34。若你改了 prose，重跑测试而不是放宽上限。
 
@@ -3730,7 +3794,7 @@ console.log(`OK ${name}：${entries.length} 个文件，skills/ 13 份 Markdown�
 - [ ] **Step 4: 全量验证**
 
 Run（包根）：`pnpm run typecheck && pnpm run test && pnpm run test:client-bundle`
-Expected: typecheck 无输出；41 个测试全绿；纯度门通过。
+Expected: typecheck 无输出；43 个测试全绿；纯度门通过。
 
 任何一条红就停下来修，**不要往下打包**。
 
@@ -3788,7 +3852,7 @@ Expected: 干净（`lib/`、`node_modules/`、`*.tgz` 都被忽略）。
 
 把下面这段原样交给用户，然后**停**。装机与真机走查是他自己跑的（spec §12），不要代跑。
 
-> v2 做完了：41 个测试全绿，`pnpm pack` 内容清单自检通过，包在 `F:/work/dsh-skill/dsh-skill-learning-coach/dsh-skill-learning-coach-0.2.0.tgz`。
+> v2 做完了：43 个测试全绿，`pnpm pack` 内容清单自检通过，包在 `F:/work/dsh-skill/dsh-skill-learning-coach/dsh-skill-learning-coach-0.2.0.tgz`。
 >
 > 装（desktop profile）：
 > ```sh
