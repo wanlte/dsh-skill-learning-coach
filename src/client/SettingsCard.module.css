@@ -1,0 +1,170 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 2px 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--divider-color, rgba(128, 128, 128, 0.25));
+  border-radius: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.input {
+  padding: 6px 8px;
+  border: 1px solid var(--divider-color, rgba(128, 128, 128, 0.35));
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+
+.hint {
+  font-size: 12px;
+  opacity: 0.65;
+  margin: 0;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--error-color, #d64545);
+}
+
+.button {
+  align-self: flex-start;
+  padding: 5px 10px;
+  border: 1px solid var(--divider-color, rgba(128, 128, 128, 0.35));
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.node,
+.nodeCurrent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.nodeCurrent {
+  border: 1px solid var(--accent-color, rgba(80, 140, 255, 0.5));
+}
+
+.nodeId {
+  flex-shrink: 0;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.nodeTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--divider-color, rgba(128, 128, 128, 0.35));
+  border-radius: 999px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.method,
+.methodOn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--divider-color, rgba(128, 128, 128, 0.25));
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.methodOn {
+  border-color: var(--accent-color, rgba(80, 140, 255, 0.5));
+}
+
+.methodName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.methodDesc {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.nodeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nodeBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 8px 4px;
+}
+
+.material {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--divider-color, rgba(128, 128, 128, 0.2));
+  border-radius: 6px;
+}
+
+.mislist {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  opacity: 0.8;
+}
