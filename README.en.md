@@ -6,14 +6,33 @@
 [![CI](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Most AI study tools stop at "here is a very complete-looking plan". On the second conversation they have forgotten where you were; on the eighth they are still on chapter one. This plugin moves state out of the chat transcript and onto disk, and replaces "you've got it" with something you can actually produce without looking.
+## What it is
+
+A plugin for DSH (DeepSeek Harness), built from three parts: a native settings card for editing the roadmap and the learning method, a host half that reads and writes state inside the current session's workspace, and a skill bundle that makes the agent coach you against your real progress. Once installed, all you say is "I want to learn X" or "continue".
+
+Good for: people with a concrete goal — interviews, exams, a career switch, a hobby — who keep forgetting what they read.
+Not for: people who want a static study plan, or who want the model to lecture through an entire course.
+
+Most AI study tools stop at "here is a very complete-looking plan". On the second conversation they have forgotten where you were; on the eighth they are still on chapter one. This plugin moves state out of the chat transcript and onto disk, and replaces "you've got it" with something you can produce without looking.
+
+## What it solves
 
 - **State on disk**: `<workspace>/learning/framework.json` is the single source of truth. New session, new model, dropped connection — same place to resume.
 - **Unprompted reproduction decides**: hints are withdrawn, you produce the artifact yourself. If a hint reaches the answer, the node is marked `gap` and gets relearned.
 - **Append-only misconception log**: the exact point you misunderstood last time is the first thing mentioned next time.
 - **Purpose-shaped mastery**: work / exam / interest / career switch produce different mastery forms — something that runs, or a timed past-paper question.
+- **Small enough to finish**: 15–25 minutes per node; unprompted reproduction is tiring, oversized nodes get abandoned.
 
-> Status: `0.2.1`. `tsc` clean, 43 automated tests green, package manifest self-check passing. The 13 machine-level checks below still need a run on an installed host.
+## How it differs
+
+| | Typical AI tutor | This plugin |
+| --- | --- | --- |
+| State | in chat context, lost on new session | one JSON file, read/written by a host route |
+| Roadmap | generated once, frozen | add / delete / pick as current / mark-not-understood in settings, persisted instantly |
+| "Learned" | the model re-explains it | your reproduction with hints withdrawn |
+| Misconceptions | dropped after the turn | append-only, quoted at the next opening |
+| Mastery | "understand X" | one verifiable action, shaped by purpose |
+| Tokens | whole plan replayed every turn | current node + one method card only |
 
 ## Install
 
@@ -32,16 +51,10 @@ Local development link (edits take effect immediately):
 pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
 ```
 
+The repo is public, so `github:wanlte/dsh-skill-learning-coach` works too — at the cost of allowing build scripts and building locally on the installer's machine. The npm path is faster.
+
 **Restart DSH** after installing — the host half and client bundle load at boot. Markdown under `skills/` is re-read on every load and needs no restart.
 Settings gains a first-level sidebar entry — **Learning roadmap** (「学习路线」 in the Chinese UI), next to Models. If it is not there, the plugin did not load.
-
-Straight from GitHub (public repo, no login) also works:
-
-```sh
-pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
-```
-
-The installer pays three costs: pnpm refuses to run build scripts of git dependencies by default (`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` unless the package is listed under `allowBuilds` in `pnpm-workspace.yaml`); the bundled skill is flagged "awaiting approval" and needs `pnpm approve`; and the package is built locally from source (~40 s), which needs GitHub reachability plus a full Node toolchain. The npm path is a prebuilt tarball: no scripts, a few seconds.
 
 ```sh
 pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
@@ -56,17 +69,6 @@ Uninstalling does not delete `learning/framework.json` or the handouts in your w
 **Every session after** — say "continue". It reads only the current node, quotes your last misconception, gives an action list, and coaches in your chosen method: you do the work → hints escalate (direction → half a step → answer) → hints are removed and you produce the node's `mastery` alone.
 
 **Closing a node** — three facts (where the roadmap is, where the handout is, the first action of the next node) plus a reminder to start a new session. State is on disk; an interruption loses nothing.
-
-## How it differs
-
-| | Typical AI tutor | This plugin |
-| --- | --- | --- |
-| State | in chat context, lost on new session | one JSON file, read/written by a host route |
-| Roadmap | generated once, frozen | add / delete / pick as current / mark-not-understood in settings, persisted instantly |
-| "Learned" | the model re-explains it | your reproduction with hints withdrawn |
-| Misconceptions | dropped after the turn | append-only, quoted at the next opening |
-| Mastery | "understand X" | one verifiable action, shaped by purpose |
-| Tokens | whole plan replayed every turn | current node + one method card only |
 
 ## Anatomy
 
@@ -120,11 +122,21 @@ The library ships with the package, one file per method; only the selected one i
 
 Notebook of wrong answers and mastery scoring; bulk handout generation; multiple learner profiles or accounts; scraping paywalled or login-gated material; HTML pages or local servers (everything visual is a native settings card).
 
-## Publish & registry
+## Development
 
-`dshai.org` and `dshmarket` do not curate by hand. They index the GitHub topic `dsh-plugin` and the npm keyword `dsh-plugin`; without both, nobody can find the package. The manifest already carries `dsh-plugin`, `repository` / `homepage` / `bugs`, a `publishConfig` pinned to the official registry, and a `files` list that keeps internal planning docs out of the tarball.
+```sh
+pnpm install
+pnpm run build               # tsc (host + types) + tsdown (single client bundle)
+pnpm run typecheck
+pnpm run test                # build, then node --test
+pnpm run test:client-bundle  # purity gate: the client bundle may not import non-platform modules
+pnpm pack
+pnpm run pack:check          # tarball manifest self-check
+```
 
-Release steps, marketplace copy and verification: [RELEASING.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/RELEASING.md). Version history: [CHANGELOG.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/CHANGELOG.md).
+`src/shared/framework.ts` has zero imports and is shared by host and client; the client may not import any host file (that would drag Node built-ins into the browser bundle, and the purity gate fails).
+
+Version history: [CHANGELOG.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/CHANGELOG.md).
 
 ## License
 

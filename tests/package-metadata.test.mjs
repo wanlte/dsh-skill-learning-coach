@@ -44,34 +44,36 @@ test('描述是一行可读文案，不被换行截断', () => {
   assert.ok(pkg.description.includes('dsh-plugin'), 'description 里应出现 dsh-plugin 便于搜索')
 })
 
-test('中文 README 首屏包含：定位、安装命令、收录信号、走查清单', () => {
+test('中文 README 首屏包含：定位、安装命令、收录信号、完整介绍的分节', () => {
   assert.match(readme, /记得你卡在哪/)
   assert.match(readme, /pnpm dsh plugin --profile desktop add dsh-skill-learning-coach/)
   assert.match(readme, /npx @deepseek-ai\/dsh plugin add dsh-skill-learning-coach/)
-  assert.match(readme, /dsh-plugin/)
-  assert.match(readme, /## 真机走查清单/)
-  assert.match(readme, /RELEASING\.md/)
-  assert.match(readme, /## English/)
+  assert.match(readme, /npmjs\.com\/package\/dsh-skill-learning-coach/)
+  for (const section of ['## 它是什么', '## 它解决什么', '## 装', '## 用', '## 状态与产物', '## 开发', '## English']) {
+    assert.ok(readme.includes(section), `README 缺分节 ${section}`)
+  }
   assert.ok(readme.split('\n').length >= 120, 'README 被截短了')
+})
+
+test('README 只做产品介绍，不掺验收清单与发布流程', () => {
+  for (const leaked of ['真机走查清单', 'RELEASING.md', 'scripts/release.ps1', '首发前']) {
+    assert.ok(!readme.includes(leaked), `README 里不该出现流程内容：${leaked}`)
+  }
 })
 
 test('npm 页面点得开的链接：指向包外文档一律用绝对地址', () => {
   const absolute = 'https://github.com/wanlte/dsh-skill-learning-coach/blob/main/'
-  assert.ok(readme.includes(`${absolute}RELEASING.md`), 'README 的 RELEASING 链接要用绝对地址，相对链接在 npm 上是死的')
   assert.ok(readme.includes(`${absolute}CHANGELOG.md`), 'README 的 CHANGELOG 链接要用绝对地址')
-  assert.ok(readmeEn.includes(`${absolute}RELEASING.md`), 'README.en 的 RELEASING 链接要用绝对地址')
+  assert.ok(readmeEn.includes(`${absolute}CHANGELOG.md`), 'README.en 的 CHANGELOG 链接要用绝对地址')
 })
 
 test('英文 README 与中文版结构对齐', () => {
+  assert.match(readmeEn, /## What it is/)
   assert.match(readmeEn, /## Install/)
-  assert.match(readmeEn, /dsh-plugin/)
+  assert.match(readmeEn, /## Data model/)
   assert.match(readmeEn, /## Methods/)
-  assert.match(readmeEn, /RELEASING\.md/)
+  assert.match(readmeEn, /## Development/)
   assert.ok(readmeEn.split('\n').length >= 80, 'README.en.md 被截短了')
-})
-
-test('README 标注的版本与 package.json 一致', () => {
-  assert.ok(readme.includes(`\`${pkg.version}\``), `README 的版本标注与 ${pkg.version} 不一致`)
 })
 
 test('变更记录覆盖当前版本', () => {
