@@ -37,11 +37,25 @@ npm publish --dry-run         # 打印将上传的文件清单与体积，不真
 
 ## 2 npm 发布
 
+一条命令跑完（推荐，脚本里已经写了下面的所有检查）：
+
 ```sh
-npm config get registry          # 必须是 https://registry.npmjs.org/
-npm whoami                       # 没登录就先 npm login
-npm publish                      # prepack 会自动 build + 纯度门
+pwsh scripts/release.ps1              # 只跑门与干跑
+pwsh scripts/release.ps1 -Publish     # 真发
 ```
+
+手打的话是这个顺序：
+
+```sh
+npm config get registry          # 官方源是 https://registry.npmjs.org/
+npm publish --dry-run            # 先干跑，确认文件清单
+npm login --registry=https://registry.npmjs.org/
+npm whoami --registry=https://registry.npmjs.org/
+npm publish --registry=https://registry.npmjs.org/
+```
+
+**国内机器必看**：默认源经常是 `registry.npmmirror.com`。`publishConfig` 会把包发到官方源，但**登录 token 是按 registry 分开存的**——在镜像源上 `npm login` 拿到的 token 对 npmjs 无效，`npm publish` 会直接 401。
+所以登录、whoami、publish 三条都要显式带 `--registry=https://registry.npmjs.org/`。
 
 要点：
 
@@ -53,7 +67,7 @@ npm publish                      # prepack 会自动 build + 纯度门
 发布后自查：
 
 ```sh
-npm view dsh-skill-learning-coach version dist.tarball keywords repository.url
+npm view dsh-skill-learning-coach version dist.tarball keywords repository.url --registry=https://registry.npmjs.org/
 ```
 
 ## 3 GitHub 仓库设置

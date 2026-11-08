@@ -85,6 +85,16 @@ test('发布流程文档给出可执行命令与收录验证', () => {
   assert.match(releasing, /npm publish/)
   assert.match(releasing, /dsh-plugin/)
   assert.match(releasing, /topics/i)
+  assert.match(releasing, /registry\.npmjs\.org/, '镜像源陷阱必须写清：登录 token 按 registry 分开存')
+})
+
+test('发布脚本存在且默认不发布，登录检查指向官方源', async () => {
+  const script = await read('../scripts/release.ps1')
+  assert.match(script, /param\(/)
+  assert.match(script, /-Publish/)
+  assert.match(script, /https:\/\/registry\.npmjs\.org\//)
+  assert.match(script, /npm publish --dry-run/)
+  assert.match(script, /if \(-not \$Publish\)/, '默认必须是干跑，只有显式 -Publish 才真发')
 })
 
 test('CI 覆盖双平台双 Node，且跑四道门', () => {

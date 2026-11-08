@@ -178,6 +178,7 @@ pnpm run pack:check          # tarball 内容清单自检
 
 本包已备好：`keywords` 含 `dsh-plugin`、`repository` / `homepage` / `bugs` 齐、`publishConfig` 锁定官方 registry、`files` 剔除了内部计划文档。
 推上去的操作步骤、市场文案与验证方法见 [RELEASING.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/RELEASING.md)。
+一条命令跑完所有门：`pwsh scripts/release.ps1`，加 `-Publish` 才真发。
 版本变更见 [CHANGELOG.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/CHANGELOG.md)。
 
 ## 它故意不做什么
