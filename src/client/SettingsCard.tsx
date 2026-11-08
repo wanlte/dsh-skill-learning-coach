@@ -5,11 +5,17 @@ import { readState, saveState } from './api.ts'
 import {
   METHOD_IDS,
   PURPOSE_KINDS,
+  addNode,
   emptyFramework,
+  nodeOf,
   parseFramework,
   pickCurrent,
+  removeSubtree,
+  replaceNode,
   workspaceOptions,
   type Framework,
+  type Material,
+  type MaterialKind,
   type MethodId,
   type NodeStatus,
   type PurposeKind,
@@ -58,6 +64,14 @@ const STATUS_LABEL: Record<NodeStatus, LocaleKey> = {
   done: 'statusDone',
 }
 
+const MATERIAL_LABEL: Record<MaterialKind, LocaleKey> = {
+  url: 'kindUrl',
+  file: 'kindFile',
+  book: 'kindBook',
+}
+
+const MATERIAL_KINDS_UI: readonly MaterialKind[] = ['url', 'file', 'book']
+
 interface TextFieldProps {
   label: string
   value: string
@@ -105,6 +119,8 @@ export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element 
   const [saveError, setSaveError] = useState<string>('')
   const [reload, setReload] = useState<number>(0)
   const currentId = draft === null ? null : pickCurrent(draft)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<string | null>(null)
 
   useEffect(() => {
     if (sessionId === undefined) return
@@ -217,13 +233,117 @@ export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element 
             <p className={css.hint}>{t('nodeCount')}: {draft.nodes.length} · {t('currentNode')}: {currentId ?? t('none')}</p>
             <ul className={css.tree}>
               {draft.nodes.map(node => (
-                <li key={node.id} className={node.id === currentId ? css.nodeCurrent : css.node}>
-                  <span className={css.nodeId}>{node.id}</span>
-                  <span className={css.nodeTitle}>{node.title}</span>
-                  <span className={css.badge}>{t(STATUS_LABEL[node.status])}</span>
+                <li key={node.id}>
+                  <div className={node.id === currentId ? css.nodeCurrent : css.node}>
+                    <span className={css.nodeId}>{node.id}</span>
+                    <button
+                      type="button"
+                      className={css.nodeTitle}
+                      style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}
+                      onClick={() => setExpanded(value => (value === node.id ? null : node.id))}
+                    >
+                      {node.title}
+                    </button>
+                    <span className={css.badge}>{t(STATUS_LABEL[node.status])}</span>
+                  </div>
+                  <div className={css.nodeActions}>
+                    <button type="button" className={css.button} onClick={() => commit({ ...draft, current: node.id })}>{t('select')}</button>
+                    <button type="button" className={css.button} onClick={() => commit(replaceNode(draft, node.id, { status: 'gap' }))}>{t('markGap')}</button>
+                    <button type="button" className={css.button} onClick={() => commit(addNode(draft, node.id, t('nodeTitle')))}>{t('addChild')}</button>
+                    <button
+                      type="button"
+                      className={css.button}
+                      onClick={() => {
+                        if (pendingRemove === node.id) {
+                          setPendingRemove(null)
+                          setExpanded(value => (value === node.id ? null : value))
+                          commit(removeSubtree(draft, node.id))
+                        } else {
+                          setPendingRemove(node.id)
+                        }
+                      }}
+                    >
+                      {pendingRemove === node.id ? t('confirmRemove') : t('remove')}
+                    </button>
+                  </div>
+                  {expanded === node.id ? (
+                    <div className={css.nodeBody}>
+                      <TextField
+                        label={t('nodeTitle')}
+                        value={node.title}
+                        onCommit={next => commit(replaceNode(draft, node.id, { title: next }))}
+                      />
+                      <TextField
+                        label={t('mastery')}
+                        value={node.mastery}
+                        hint={t('masteryHint')}
+                        onCommit={next => commit(replaceNode(draft, node.id, { mastery: next }))}
+                      />
+                      <span className={css.label}>{t('materials')}</span>
+                      {node.materials.map((material, index) => (
+                        <div key={index} className={css.material}>
+                          <label className={css.field}>
+                            <span className={css.label}>{t('materialKind')}</span>
+                            <select
+                              className={css.input}
+                              value={material.kind}
+                              onChange={event => {
+                                const materials = node.materials.map((item, i) => (i === index ? { ...item, kind: event.target.value as MaterialKind } : item))
+                                commit(replaceNode(draft, node.id, { materials }))
+                              }}
+                            >
+                              {MATERIAL_KINDS_UI.map(kind => <option key={kind} value={kind}>{t(MATERIAL_LABEL[kind])}</option>)}
+                            </select>
+                          </label>
+                          <TextField
+                            label={t('materialRef')}
+                            value={material.ref}
+                            onCommit={next => {
+                              const materials = node.materials.map((item, i) => (i === index ? { ...item, ref: next } : item))
+                              commit(replaceNode(draft, node.id, { materials }))
+                            }}
+                          />
+                          <TextField
+                            label={t('materialEnough')}
+                            value={material.enough}
+                            onCommit={next => {
+                              const materials = node.materials.map((item, i) => (i === index ? { ...item, enough: next } : item))
+                              commit(replaceNode(draft, node.id, { materials }))
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className={css.button}
+                            onClick={() => commit(replaceNode(draft, node.id, { materials: node.materials.filter((_, i) => i !== index) }))}
+                          >
+                            {t('removeMaterial')}
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className={css.button}
+                        onClick={() => {
+                          const material: Material = { kind: 'url', ref: '', enough: '' }
+                          commit(replaceNode(draft, node.id, { materials: [...node.materials, material] }))
+                        }}
+                      >
+                        {t('addMaterial')}
+                      </button>
+                      {nodeOf(draft, node.id).misconceptions.length === 0 ? null : (
+                        <>
+                          <span className={css.label}>{t('misconceptions')}</span>
+                          <ul className={css.mislist}>
+                            {nodeOf(draft, node.id).misconceptions.map((entry, index) => <li key={index}>{entry}</li>)}
+                          </ul>
+                        </>
+                      )}
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
+            <button type="button" className={css.button} onClick={() => commit(addNode(draft, null, t('nodeTitle')))}>{t('addRoot')}</button>
           </div>
 
           <div className={css.section}>
