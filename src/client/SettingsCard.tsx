@@ -2,19 +2,11 @@ import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { Context } from './context-types.ts'
 import { readState, saveState } from './api.ts'
+import { emptyFramework } from '../shared/framework.ts'
 
 export type SettingsCardProps = PropsLocale<'learning.coach'> & { ctx: Context }
 
-const PROBE = {
-  version: 1,
-  topic: '通道验证',
-  purpose: { kind: 'interest', detail: '', deadline: null },
-  weeklyMinutes: 0,
-  method: 'feynman',
-  customMethod: null,
-  current: null,
-  nodes: [],
-}
+const PROBE = emptyFramework('通道验证')
 
 export function SettingsCard({ t, ctx }: SettingsCardProps): JSX.Element {
   const subscribe = useCallback((fn: () => void) => ctx.sessions.list.subscribe(fn), [ctx])

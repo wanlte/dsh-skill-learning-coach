@@ -1,3 +1,5 @@
+import type { Framework } from '../shared/framework.ts'
+
 export class CoachApiError extends Error {
   constructor(readonly code: string, message: string) {
     super(message)
@@ -9,7 +11,7 @@ export interface StateView {
   cwd: string
   path: string
   exists: boolean
-  framework: unknown
+  framework: Framework | null
 }
 
 function routeUrl(method: string): string {
@@ -44,6 +46,6 @@ export function readState(sessionId: string): Promise<StateView> {
   return call<StateView>('state.read', { sessionId })
 }
 
-export function saveState(sessionId: string, framework: unknown): Promise<StateView> {
+export function saveState(sessionId: string, framework: Framework): Promise<StateView> {
   return call<StateView>('state.write', { sessionId, framework })
 }
