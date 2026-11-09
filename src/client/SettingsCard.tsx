@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { Context } from './context-types.ts'
 import { readState, saveState } from './api.ts'
@@ -118,6 +118,8 @@ export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element 
   const [load, setLoad] = useState<LoadState>({ status: 'loading', path: '', error: '' })
   const [saveError, setSaveError] = useState<string>('')
   const [reload, setReload] = useState<number>(0)
+  const saveErrorRef = useRef<string>('')
+  useEffect(() => { saveErrorRef.current = saveError }, [saveError])
   const currentId = draft === null ? null : pickCurrent(draft)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<string | null>(null)
@@ -137,6 +139,30 @@ export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element 
     })
     return () => { cancelled = true }
   }, [sessionId, reload])
+
+  // 盘上文件被别处改动（AI 落盘、另一个窗口编辑）时自己刷进来，不用手动重载。
+  // 正在输入或上次保存失败时让路，避免把用户手里没提交的文字冲掉。
+  useEffect(() => {
+    if (sessionId === undefined) return
+    let cancelled = false
+    const tick = (): void => {
+      if (saveErrorRef.current !== '') return
+      const active = document.activeElement
+      if (active instanceof HTMLElement && active.matches('input, textarea, select')) return
+      readState(sessionId).then(view => {
+        if (cancelled) return
+        setDraft(previous => {
+          if (previous === null) return view.framework
+          return JSON.stringify(previous) === JSON.stringify(view.framework) ? previous : view.framework
+        })
+        setLoad(previous => previous.status === 'ready' && previous.path === view.path
+          ? previous
+          : { status: 'ready', path: view.path, error: '' })
+      }).catch(() => { /* 轮询失败不打扰，下一次再试 */ })
+    }
+    const timer = setInterval(tick, 3000)
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [sessionId])
 
   const commit = (next: Framework): void => {
     if (sessionId === undefined) return
@@ -175,6 +201,7 @@ export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element 
         </p>
       ) : null}
       {load.path === '' ? null : <p className={css.hint}>{t('path')}: {load.path}</p>}
+      {load.status === 'ready' ? <p className={css.hint}>{t('liveSync')}</p> : null}
       {saveError === '' ? null : (
         <p className={css.error}>
           {t('saveFailed')}: {saveError}

@@ -43,10 +43,14 @@ test('SKILL.md 正文 ≤60 行', () => {
   assert.ok(count <= 60, `正文 ${count} 行，超过 60`)
 })
 
-test('skills/ 里只有 Markdown，没有 HTML 模板或服务脚本', () => {
+test('skills/ 只放 Markdown 与路线图模板，没有别的资源', () => {
   const files = walk(SKILL_DIR)
   assert.ok(files.length > 0)
-  for (const file of files) assert.ok(file.endsWith('.md'), `skills/ 里出现非 Markdown 文件：${file}`)
+  const TEMPLATE = join(SKILL_DIR, 'references', 'roadmap-template.html')
+  for (const file of files) {
+    assert.ok(file.endsWith('.md') || file === TEMPLATE, `skills/ 里出现未登记的文件：${file}`)
+  }
+  assert.ok(existsSync(TEMPLATE), '路线图模板缺失')
 })
 
 test('v1 的 intake.md 已删除，first-run.md 与 framework.md 已建', () => {

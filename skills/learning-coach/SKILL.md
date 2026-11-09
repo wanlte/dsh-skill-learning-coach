@@ -7,7 +7,8 @@ whenToUse: 用户说"我想学 X / 继续学 / 我不知道下一步学什么 / 
 # Learning Coach
 
 你是这位学习者的贴身教师。状态在盘上：`<工作区>/learning/framework.json`。
-渲染全在 DSH 设置卡（设置 → 学习路线）。你**不生成 HTML、不生成图表、不在聊天里画路线树**。
+渲染全在 DSH 设置卡（设置 → 学习路线，随盘上文件实时刷新）。路线图另出一份 `learning/路线图.html`，照模板填。
+你**不在聊天里画路线树、不贴 HTML**。
 
 ## 0 每轮硬约束
 
@@ -31,6 +32,7 @@ whenToUse: 用户说"我想学 X / 继续学 / 我不知道下一步学什么 / 
 读 [framework.md](references/framework.md)：节点粒度、按目的裁剪、状态机、`current` 选取、依赖护栏。
 **写盘一律用 fs 工具做原子写**：先写 `learning/framework.json.tmp`，再 rename 成 `learning/framework.json`。
 写前按 framework.md 自查字段；`mastery` 不是一件可验证的动作就不许落盘。
+**框架一落盘就生成路线图页**：读 [roadmap.md](references/roadmap.md)，照模板渲染 `learning/路线图.html`。结构变了就重生成一次，别每轮都写。
 
 ## 3 需要编排学习页时
 

@@ -70,7 +70,7 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 
 ## 用
 
-**第一次**：说「我想学 X」。它先问**目的**（工作 / 考试 / 兴趣 / 转行，加期限与目标岗位或考试名），再问现状（要具体动作，不要「了解」）、过去一周真花了多少分钟、手上有什么资料。然后生成知识框架，沿框架一块一块问。
+**第一次**：说「我想学 X」。每一问都给编号选项，回数字就行——目的（1 求职 / 2 考试 / 3 兴趣 / 4 转行，再补岗位或考试名与期限）、现状（完全没接触 / 看过但写不出 / 能照例子做 / 能独立做但讲不清）、过去一周真花了多少分钟、手头有什么资料。然后生成知识框架，落盘后立刻出一页路线图 `learning/路线图.html`，沿框架一块一块问。
 **问完默认你已懂**；你说没懂，它只标红那一个节点。
 
 **之后每次**：说「继续学」。它只读当前节点，先引用你上次的卡壳，给行动清单，再按你选的方法带练：
@@ -82,9 +82,9 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 
 | 块 | 位置 | 干什么 |
 | --- | --- | --- |
-| 设置卡 | 设置 → 学习路线（侧边栏一级） | 改目的与每周真实时间；路线树增 / 删 / 选为当前 / 标没懂；编辑每节的资料与达标标准；8 张学习方法卡单选 + 自定义 |
+| 设置卡 | 设置 → 学习路线（侧边栏一级） | 改目的与每周真实时间；路线树增 / 删 / 选为当前 / 标没懂；编辑每节的资料与达标标准；8 张学习方法卡单选 + 自定义。AI 在会话里落盘后，卡片 3 秒内自己刷新 |
 | host 半 | `lib/index.js` | 一条 fenced 路由 `/learning-coach/api`，两个方法 `state.read` / `state.write`；工作区路径由 host 从会话解析，客户端只传 `sessionId` |
-| skill bundle | `skills/learning-coach/` | 38 行路由 `SKILL.md` + 按需读的 `references/`；AI 每轮只读当前节点 |
+| skill bundle | `skills/learning-coach/` | 路由 `SKILL.md` + 按需读的 `references/`；AI 每轮只读当前节点；路线图照模板生成 |
 
 渲染全在客户端，AI 零 output token。设置卡不存 localStorage，状态真源只有磁盘上那一个 JSON。
 「内置插件」设置页里没有同名 tab——只有侧边栏这一个入口。
@@ -93,6 +93,7 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 
 - `<工作区>/learning/framework.json` —— 唯一状态源：目的、每周分钟数、方法、当前节、整棵框架树
 - `<工作区>/learning/讲义/<YYYY-MM-DD>-<节点标题>.md` —— 一次一页，资料索引 + 自测，禁止批量生成
+- `<工作区>/learning/路线图.html` —— 一次落盘一张离线快照：进度、状态、当前节点、每节达标动作与资料位置；断网可开，结构一变就重生成
 
 ```json
 {
@@ -149,7 +150,7 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 - 批量生成整套课程讲义
 - 多学习者档案 / 账号体系
 - 联网抓取付费或需登录的资料
-- HTML 页面与本地服务：全部可视化收进原生设置卡
+- 本地服务、在线同步、账号云存储：设置卡是编辑入口，HTML 只是同一份数据的离线快照
 
 ## 开发
 

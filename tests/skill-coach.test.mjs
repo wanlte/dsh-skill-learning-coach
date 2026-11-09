@@ -55,3 +55,36 @@ test('materials 定义 spaced 的复习记录行，格式逐字固定', () => {
   const text = read('references/materials.md')
   assert.ok(text.includes('复习记录：达标日 YYYY-MM-DD；已复习 N 次'), '复习记录行格式被改动了，spaced.md 会读不到')
 })
+
+test('路线图模板离线自足，占位符齐全', () => {
+  const tpl = read('references/roadmap-template.html')
+  for (const marker of ['{{TOPIC}}', '{{ROWS}}', '{{CURRENT}}', '{{PERCENT}}', '{{GENERATED_AT}}', '{{SOURCE}}']) {
+    assert.ok(tpl.includes(marker), `模板缺占位符 ${marker}`)
+  }
+  assert.ok(!/https?:\/\//.test(tpl), '模板不得引用外部资源，必须断网可开')
+  assert.ok(!/<script/i.test(tpl), '模板不得带脚本')
+})
+
+test('roadmap.md 规定生成时机、行格式与「不贴聊天」', () => {
+  const text = read('references/roadmap.md')
+  assert.ok(text.includes('roadmap-template.html'), '必须指向模板')
+  assert.ok(text.includes('data-depth'), '必须给 data-depth 规则')
+  assert.ok(text.includes('路线图.html.tmp'), '必须走同一套原子写')
+  assert.ok(text.includes('只在结构变化时生成'), '必须限制重生成频率')
+  assert.ok(text.includes('不要把 HTML 贴进聊天'), '聊天里不该贴 HTML')
+})
+
+test('first-run 每一问都给出编号选项', () => {
+  const text = read('references/first-run.md')
+  for (const marker of ['1 求职', '1 完全没接触', '1 不到 1 小时', '1 本地文件', '1 费曼', '1 就按这个']) {
+    assert.ok(text.includes(marker), `缺选项：${marker}`)
+  }
+  assert.ok(text.includes('回数字'), '必须说明可以只回数字')
+})
+
+test('SKILL.md 把路线图接进路由，但不在聊天里画树', () => {
+  const text = read('SKILL.md')
+  assert.ok(text.includes('roadmap.md'), 'SKILL.md 必须指向 roadmap.md')
+  assert.ok(text.includes('路线图.html'))
+  assert.ok(text.includes('不贴 HTML'))
+})

@@ -56,7 +56,7 @@ test('custom 以 customMethod 为准，且保留通用护栏', () => {
 
 test('整个 skill bundle 的相对链接全部可达', () => {
   const files = walk(SKILL_DIR).filter(file => file.endsWith('.md'))
-  assert.equal(files.length, 13, `skill bundle 应有 13 份 Markdown，实际 ${files.length}`)
+  assert.equal(files.length, 14, `skill bundle 应有 14 份 Markdown，实际 ${files.length}`)
   let checked = 0
   for (const file of files) {
     for (const match of read(file).matchAll(/\]\(([^)]+)\)/g)) {

@@ -66,7 +66,7 @@ Uninstalling does not delete `learning/framework.json` or the handouts in your w
 
 ## Use
 
-**First run** — say "I want to learn X". It asks for the *purpose* first (work / exam / interest / career switch, plus deadline and target role or exam name), then your current ability (a concrete action, not "I know some"), how many minutes last week you actually spent, and what material you already have. Then it generates the framework and walks through it one node at a time. **Everything is assumed known unless you say you did not get it** — then exactly that node turns red.
+**First run** — say "I want to learn X". Every question comes with numbered options, so a single number is enough: purpose (1 job / 2 exam / 3 interest / 4 career switch, then role or exam name and a deadline), current ability (never touched it / watched tutorials but can't build / can follow examples / can build alone but can't explain), minutes actually spent last week, and what material you already have. It then generates the framework and, as soon as it is written, renders a roadmap page at `learning/路线图.html`, then walks through one node at a time. **Everything is assumed known unless you say you did not get it** — then exactly that node turns red.
 
 **Every session after** — say "continue". It reads only the current node, quotes your last misconception, gives an action list, and coaches in your chosen method: you do the work → hints escalate (direction → half a step → answer) → hints are removed and you produce the node's `mastery` alone.
 
@@ -76,9 +76,9 @@ Uninstalling does not delete `learning/framework.json` or the handouts in your w
 
 | Part | Location | Job |
 | --- | --- | --- |
-| Settings card | Settings → Learning roadmap (sidebar level) | purpose, real weekly minutes, roadmap tree edits, per-node materials and mastery, 8 method cards |
+| Settings card | Settings → Learning roadmap (sidebar level) | purpose, real weekly minutes, roadmap tree edits, per-node materials and mastery, 8 method cards; refreshes itself within 3s after the AI writes state |
 | Host half | `lib/index.js` | fenced route `/learning-coach/api` with `state.read` / `state.write`; workspace resolved by the host from the session, client sends only `sessionId` |
-| Skill bundle | `skills/learning-coach/` | 38-line routing `SKILL.md` plus `references/` read on demand; one current node per turn |
+| Skill bundle | `skills/learning-coach/` | routing `SKILL.md` plus `references/` read on demand; one current node per turn; the roadmap page is rendered from a shipped template |
 
 All rendering happens client-side, so the model spends zero output tokens on UI. The settings card keeps no localStorage copy — the JSON on disk is the only truth.
 
@@ -127,7 +127,7 @@ The library ships with the package, one file per method; only the selected one i
 
 ## Deliberately out of scope
 
-Notebook of wrong answers and mastery scoring; bulk handout generation; multiple learner profiles or accounts; scraping paywalled or login-gated material; HTML pages or local servers (everything visual is a native settings card).
+Notebook of wrong answers and mastery scoring; bulk handout generation; multiple learner profiles or accounts; scraping paywalled or login-gated material; local servers, cloud sync or accounts — the settings card is the editor, and the HTML roadmap is only an offline snapshot of the same data.
 
 ## Development
 
