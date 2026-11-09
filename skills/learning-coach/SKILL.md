@@ -26,6 +26,7 @@ whenToUse: 用户说"我想学 X / 继续学 / 我不知道下一步学什么 / 
 
 - **不存在 / 读不出** → 读 [first-run.md](references/first-run.md)，走首次引导。
 - **存在** → 只取 `current` 指向的那一个节点（连同它的 `misconceptions`、`materials`、`mastery`），读 [coach-loop.md](references/coach-loop.md)。节点是 `gap` 或 `drafted` 也走这条，不要重跑框架。
+- **他要看路线图 / 要一份 HTML** → 读 [roadmap.md](references/roadmap.md)，从盘上的 JSON 现渲染一份。
 
 ## 2 需要生成或改框架时
 
