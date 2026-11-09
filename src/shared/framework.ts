@@ -15,6 +15,8 @@ export const SPACED_INTERVALS = [1, 3, 7, 14, 30] as const
 export interface Material {
   kind: MaterialKind
   ref: string
+  /** 章节号 / 页码 / 时间戳 / 段落首句。让学习者一步翻到，而不是通读整份资料 */
+  locator?: string
   enough: string
 }
 
@@ -108,11 +110,16 @@ function requireDateOrNull(value: unknown, field: string): string | null {
 
 function parseMaterial(input: unknown, field: string): Material {
   const row = requireObject(input, field)
-  return {
+  const material: Material = {
     kind: requireOneOf(row.kind, MATERIAL_KINDS, `${field}.kind`),
     ref: requireNonEmpty(row.ref, `${field}.ref`),
     enough: requireString(row.enough, `${field}.enough`),
   }
+  if (row.locator !== undefined && row.locator !== null) {
+    const locator = requireString(row.locator, `${field}.locator`).trim()
+    if (locator !== '') material.locator = locator
+  }
+  return material
 }
 
 function parseNode(input: unknown, field: string): FrameworkNode {

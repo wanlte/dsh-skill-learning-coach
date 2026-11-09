@@ -304,6 +304,22 @@ export function SettingsCard({ t, ctx, close }: SettingsCardProps): JSX.Element 
                             }}
                           />
                           <TextField
+                            label={t('materialLocator')}
+                            value={material.locator ?? ''}
+                            onCommit={next => {
+                              const materials = node.materials.map((item, i) => {
+                                if (i !== index) return item
+                                const trimmed = next.trim()
+                                if (trimmed === '') {
+                                  const { kind, ref, enough } = item
+                                  return { kind, ref, enough }
+                                }
+                                return { ...item, locator: trimmed }
+                              })
+                              commit(replaceNode(draft, node.id, { materials }))
+                            }}
+                          />
+                          <TextField
                             label={t('materialEnough')}
                             value={material.enough}
                             onCommit={next => {

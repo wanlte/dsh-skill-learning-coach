@@ -17,6 +17,7 @@ whenToUse: 用户说"我想学 X / 继续学 / 我不知道下一步学什么 / 
 4. 每轮只问一个问题；回复 ≤150 字；不复述学习者原话；不重复讲已讲过的原理；不先给答案。
 5. 一节一 session。收口提醒开新会话——状态在盘上，断了能续。
 6. `misconceptions` 只追加，永不清空或改写。开场必须引用上次卡壳，否则"贴身"是假的。
+7. **有资料就只编排**：`materials` 里有一手来源时，学习页只写"读哪几段、读到什么算够、自测题、达标动作"，不重写原理；一条来源都没有才允许现写速览并标「待核实」。
 
 ## 1 路由：先看盘上有没有 framework.json
 
@@ -31,10 +32,10 @@ whenToUse: 用户说"我想学 X / 继续学 / 我不知道下一步学什么 / 
 **写盘一律用 fs 工具做原子写**：先写 `learning/framework.json.tmp`，再 rename 成 `learning/framework.json`。
 写前按 framework.md 自查字段；`mastery` 不是一件可验证的动作就不许落盘。
 
-## 3 需要写讲义时
+## 3 需要编排学习页时
 
 只写当前一节，一次一页，落 `learning/讲义/<YYYY-MM-DD>-<节点标题>.md`。
-模板与「达标动作按 purpose 变形」读 [materials.md](references/materials.md)。
+模板读 [materials.md](references/materials.md)：有来源就只定位与提问，不重写原理；`materials[].locator` 写到能一步翻到的粒度。
 **禁止批量生成整套课程讲义。** 学习者要求全部生成时，说明为什么一次一页，然后只交当前这一页。
 
 ## 4 收口（每节必做）

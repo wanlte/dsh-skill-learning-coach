@@ -28,11 +28,20 @@ test('coach-loop 守住省 token 与只追加两条硬约束', () => {
   assert.ok(text.includes('只读选中的那一份'), '方法库必须选哪个读哪个')
 })
 
-test('materials 保留强制自标行与待核实规则', () => {
+test('materials 是资料优先的编排页，不重写原理', () => {
   const text = read('references/materials.md')
-  assert.ok(text.includes('本页为 AI 现写的辅助讲义'), '页首自标行不可省略')
+  assert.ok(text.includes('本页是资料索引与练习页，不是教材'), '页首自标被改了')
+  assert.ok(text.includes('不重写原文'), '必须写明不重写原理')
+  assert.ok(text.includes('locator'), '必须要求写 locator')
+  assert.ok(text.includes('300 字'), '必须给正文预算，否则又写成教材')
+  assert.ok(!text.includes('一个具体故事开场'), '编排页不该再要求 AI 现写开场故事')
+})
+
+test('materials 保留无来源时的例外与待核实规则', () => {
+  const text = read('references/materials.md')
+  assert.ok(text.includes('原理速览'), '缺"找不到来源才现写"的例外分支')
   assert.ok(text.includes('待核实'))
-  assert.ok(text.includes('一个具体故事开场'))
+  assert.ok(text.includes('至少两处'), '现写的速览必须标出待核实点')
 })
 
 test('materials 的达标动作按四种 purpose 变形，并禁止不可验证表述', () => {

@@ -21,6 +21,7 @@ Most AI study tools stop at "here is a very complete-looking plan". On the secon
 - **Unprompted reproduction decides**: hints are withdrawn, you produce the artifact yourself. If a hint reaches the answer, the node is marked `gap` and gets relearned.
 - **Append-only misconception log**: the exact point you misunderstood last time is the first thing mentioned next time.
 - **Purpose-shaped mastery**: work / exam / interest / career switch produce different mastery forms — something that runs, or a timed past-paper question.
+- **Materials first, never a rewritten textbook**: your own textbook, slides and links are read first; the study page only says which passages to read, how far is enough, the self-tests and the mastery action — the explanation stays with the source. Cheaper in tokens, and it fits your own context.
 - **Small enough to finish**: 15–25 minutes per node; unprompted reproduction is tiring, oversized nodes get abandoned.
 
 ## How it differs
@@ -32,6 +33,7 @@ Most AI study tools stop at "here is a very complete-looking plan". On the secon
 | "Learned" | the model re-explains it | your reproduction with hints withdrawn |
 | Misconceptions | dropped after the turn | append-only, quoted at the next opening |
 | Mastery | "understand X" | one verifiable action, shaped by purpose |
+| Handouts | the model rewrites the textbook — expensive and error-prone | your own materials are read first; the study page is locators plus self-tests, the explanation stays with the source |
 | Tokens | whole plan replayed every turn | current node + one method card only |
 
 ## Install
@@ -98,7 +100,12 @@ All rendering happens client-side, so the model spends zero output tokens on UI.
       "title": "TCP three-way handshake",
       "status": "gap",
       "materials": [
-        { "kind": "url", "ref": "https://www.rfc-editor.org/rfc/rfc9293", "enough": "can draw the three message exchange" }
+        {
+          "kind": "url",
+          "ref": "https://www.rfc-editor.org/rfc/rfc9293",
+          "locator": "§3.4 TCP Connection Establishment",
+          "enough": "stop once you can say which state SYN / SYN-ACK / ACK each moves"
+        }
       ],
       "mastery": "Without notes, explain to a newcomer why two handshakes are not enough, and what the third one prevents",
       "misconceptions": ["taking 'I received your message' as the only purpose of the third handshake"],
@@ -110,7 +117,7 @@ All rendering happens client-side, so the model spends zero output tokens on UI.
 }
 ```
 
-Rules enforced on write: `status` moves `pending` → `assumed-known` → `gap` → `drafted` → `done`; `mastery` must be a verifiable action, never "read chapter 3"; `misconceptions` is append-only and a rewrite is rejected; writes are atomic (`.tmp` then rename) and a truncated file raises an explicit error instead of silently resetting.
+Rules enforced on write: `status` moves `pending` → `assumed-known` → `gap` → `drafted` → `done`; `mastery` must be a verifiable action, never "read chapter 3"; `materials[].locator` must be fine-grained enough to jump straight to (section / page / timestamp / opening line) — it is what makes "locate, don't rewrite" possible; `misconceptions` is append-only and a rewrite is rejected; writes are atomic (`.tmp` then rename) and a truncated file raises an explicit error instead of silently resetting.
 
 ## Methods
 

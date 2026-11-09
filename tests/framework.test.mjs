@@ -124,3 +124,34 @@ test('workspaceOptions 按 cwd 去重、取最新、排除 subagent、无 cwd �
     { cwd: '/p2', sessionId: 'c', updatedAt: 20 },
   ])
 })
+
+test('materials 的可选 locator 能往返，没写就不凭空补', () => {
+  const fw = seeded()
+  const nodes = fw.nodes.map(node => node.id !== '2.1' ? node : {
+    ...node,
+    materials: [
+      { kind: 'book', ref: '计算机网络：自顶向下', locator: '§3.5.2（p.213–216）', enough: '能画出三段报文交换' },
+      { kind: 'url', ref: 'https://www.rfc-editor.org/rfc/rfc9293', enough: '读到建连状态机' },
+    ],
+  })
+  const parsed = parseFramework(JSON.parse(JSON.stringify({ ...fw, nodes })))
+  const materials = nodeOf(parsed, '2.1').materials
+  assert.equal(materials[0].locator, '§3.5.2（p.213–216）')
+  assert.equal('locator' in materials[1], false, '没写 locator 时不该凭空补上一个键')
+})
+
+test('locator 必须是字符串，空串等于没写', () => {
+  const fw = seeded()
+  const withBad = fw.nodes.map(node => node.id !== '2.1' ? node : {
+    ...node,
+    materials: [{ kind: 'url', ref: 'https://example.com', locator: 42, enough: '读完' }],
+  })
+  assert.throws(() => parseFramework({ ...fw, nodes: withBad }), err => err.code === 'bad-shape')
+
+  const withBlank = fw.nodes.map(node => node.id !== '2.1' ? node : {
+    ...node,
+    materials: [{ kind: 'url', ref: 'https://example.com', locator: '   ', enough: '读完' }],
+  })
+  const parsed = parseFramework(JSON.parse(JSON.stringify({ ...fw, nodes: withBlank })))
+  assert.equal('locator' in nodeOf(parsed, '2.1').materials[0], false)
+})

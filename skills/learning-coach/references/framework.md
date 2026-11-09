@@ -24,7 +24,8 @@
 
 ## 3 每个节点必须写全三件
 
-- `materials`：1–3 份，每份 `{kind, ref, enough}`。`kind` 只能是 `url` / `file` / `book`（**没有 video**）；`ref` 必须非空。
+- `materials`：1–3 份，每份 `{kind, ref, locator?, enough}`。`kind` 只能是 `url` / `file` / `book`（**没有 video**）；`ref` 必须非空。
+  `locator` 写到能一步翻到的粒度（章节号 / 页码 / 时间戳 / 段落首句）。有来源就必须写——它是"只编排、不重写原理"的前提。
   `enough` 写清**读到什么程度算够**（"能画出三段报文交换图"，不是"读完第 3 章"）。校验器允许 `enough` 为空，但你不许留空。
 - `mastery`：**一件可验证的动作**，要能被另一个人当场判定做到了没有。禁止"读完某章""理解某概念""掌握 X"。
 - `misconceptions`：初始 `[]`，之后**只追加**。

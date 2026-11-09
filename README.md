@@ -23,6 +23,7 @@ DSH（DeepSeek Harness）的一个插件，由三块拼成：一张原生设置�
 - **无提示产出才算过**：AI 先撤掉提示，你自己做。给到答案就标 `gap`，这一节重学。
 - **卡壳档案只追加**：你上次误解的那一点，下次开场它先提。这是「贴身」的物理载体，不是装饰。
 - **按目的定达标**：工作 / 考试 / 兴趣 / 转行，达标动作的形态不同——能跑的东西，还是一道限时真题。
+- **资料优先，不重写教材**：你手上的教材、课件、链接先读；学习页只写「读哪几段、读到什么算够、自测、达标动作」，原理归来源。省 token，也更贴你的语境。
 - **节小到能收口**：一节 15–25 分钟，无提示产出更累，节太大就会放弃。
 
 ## 和「AI 家教」哪里不一样
@@ -34,6 +35,7 @@ DSH（DeepSeek Harness）的一个插件，由三块拼成：一张原生设置�
 | 学过没有 | AI 复述一遍就算过 | 撤掉提示后的独立产出，才算 `done` |
 | 卡壳 | 当轮聊完就丢 | `misconceptions` 只追加，下次开场必须引用 |
 | 达标标准 | 「理解 XX」 | 一件可验证的动作，形态随 `purpose` 变 |
+| 讲义 | AI 重写一遍教材，贵且容易错 | 你手上的资料先读，学习页只做定位 + 自测，原理归来源 |
 | token | 每轮重放整段对话里的计划 | 每轮只读当前节点 + 当前那一份方法卡 |
 
 ## 装
@@ -74,7 +76,7 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 **之后每次**：说「继续学」。它只读当前节点，先引用你上次的卡壳，给行动清单，再按你选的方法带练：
 你先做 → 卡壳给阶梯提示（方向 → 半个步骤 → 答案）→ 撤掉提示，让你独立产出那件 `mastery`。
 
-**一节收口**：报三件事（路线在哪 / 这页讲义在哪 / 下一节第一个动作），并提醒开新会话。状态在盘上，断了能续。
+**一节收口**：报三件事（路线在哪 / 这页学习页在哪 / 下一节第一个动作），并提醒开新会话。状态在盘上，断了能续。
 
 ## 形态：三块，职责单一
 
@@ -90,7 +92,7 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 ## 状态与产物
 
 - `<工作区>/learning/framework.json` —— 唯一状态源：目的、每周分钟数、方法、当前节、整棵框架树
-- `<工作区>/learning/讲义/<YYYY-MM-DD>-<节点标题>.md` —— 一次一页，禁止批量生成
+- `<工作区>/learning/讲义/<YYYY-MM-DD>-<节点标题>.md` —— 一次一页，资料索引 + 自测，禁止批量生成
 
 ```json
 {
@@ -108,7 +110,12 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
       "title": "TCP 三次握手",
       "status": "gap",
       "materials": [
-        { "kind": "url", "ref": "https://www.rfc-editor.org/rfc/rfc9293", "enough": "能画出三段报文交换图" }
+        {
+          "kind": "url",
+          "ref": "https://www.rfc-editor.org/rfc/rfc9293",
+          "locator": "§3.4 TCP Connection Establishment",
+          "enough": "读到 SYN / SYN-ACK / ACK 各改哪个状态就停"
+        }
       ],
       "mastery": "不看资料，向新人讲清为什么不是两次，并说出第三次握手防的是什么",
       "misconceptions": ["把'确认收到'当成第三次握手的唯一目的"],
@@ -122,8 +129,9 @@ pnpm dsh plugin --profile desktop remove dsh-skill-learning-coach
 
 字段守则：
 
-- `status` 状态机：`pending` → 问完 `assumed-known` → 说没懂 `gap` → 出讲义 `drafted` → 无提示产出 `done`
+- `status` 状态机：`pending` → 问完 `assumed-known` → 说没懂 `gap` → 出学习页 `drafted` → 无提示产出 `done`
 - `mastery` 必须是一件可验证的动作；「读完某章」「理解某概念」不许落盘
+- `materials[].locator` 写到能一步翻到的粒度（章节 / 页码 / 时间戳 / 段落首句），是「只编排不重写」的前提
 - `materials[].enough` 必须写清读到什么程度算够
 - `misconceptions` 只追加、不由 AI 清空；写盘时被改写直接拒写
 - 写盘走原子写（先 `.tmp` 再 rename）；半截 JSON 读出来报明确错误，不静默重置

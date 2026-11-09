@@ -1,7 +1,7 @@
 {
   "name": "dsh-skill-learning-coach",
-  "version": "0.2.1",
-  "description": "DSH 学习陪练插件（dsh-plugin）：AI 自生成知识框架、沿路线提问、默认已懂只标缺口；路线与八种学习法在原生设置卡可视化编辑并落盘到工作区，按目的定达标标准，卡壳跨会话引用。",
+  "version": "0.2.2",
+  "description": "DSH 学习陪练插件（dsh-plugin）：AI 生成知识框架、沿路线提问、默认已懂只标缺口；讲义优先编排你已有的一手资料而不重写原理，路线与八种学习法在原生设置卡可视化编辑并落盘到工作区，按目的定达标标准，卡壳跨会话引用。",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
