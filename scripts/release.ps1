@@ -1,12 +1,14 @@
 # 一条命令跑完发布门；加 -Publish 才真的发。
 # 用法：
-#   pwsh scripts/release.ps1              # 只跑门 + 干跑
-#   pwsh scripts/release.ps1 -Publish     # 真发（需先 npm login）
-#   pwsh scripts/release.ps1 -Tag         # 打 tag 并推（需 git 凭据）
+#   pwsh scripts/release.ps1                  # 只跑门 + 干跑
+#   pwsh scripts/release.ps1 -Publish -Otp 123456   # 真发（账号开了 2FA 时给六位码）
+#   pwsh scripts/release.ps1 -Publish         # 真发（2FA 已设为 auth-only 时不用给码）
+#   pwsh scripts/release.ps1 -Tag             # 打 tag 并推（需 git 凭据）
 
 param(
   [switch]$Publish,
-  [switch]$Tag
+  [switch]$Tag,
+  [string]$Otp = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -43,7 +45,7 @@ if (-not $Publish) {
   Write-Output "-- 干跑（不发布）"
   npm publish --dry-run
   Write-Output ''
-  Write-Output "门全过。真发：pwsh scripts/release.ps1 -Publish"
+  Write-Output "门全过。真发：pwsh scripts/release.ps1 -Publish（账号要 2FA 时再加 -Otp 123456）"
   exit 0
 }
 
@@ -52,8 +54,18 @@ npm whoami --registry=$official
 if ($LASTEXITCODE -ne 0) { throw "未登录官方源：npm login --registry=$official" }
 
 Write-Output "-- 发布"
-npm publish --registry=$official
-if ($LASTEXITCODE -ne 0) { throw '发布失败，看上面的 npm 输出' }
+$publishArgs = @('publish', "--registry=$official")
+if ($Otp -ne '') { $publishArgs += "--otp=$Otp" }
+npm @publishArgs
+if ($LASTEXITCODE -ne 0) {
+  throw @'
+发布失败。
+如果再看到 E403 "Two-factor authentication ... is required"：
+  - 账号 2FA 是 "Authorization and writes" → 带上六位码重跑：-Publish -Otp 123456
+  - 或把 2FA 改成 "Authorization only"（npmjs.com → Account → Two-factor authentication），之后发布不再要码
+  - 想用 token：必须勾 "Bypass two-factor authentication"，但 npm 正在限制这类 token 用于发布，别当长期方案
+'@
+}
 
 Write-Output "-- 发布后自查"
 npm view $pkg.name version keywords repository.url --registry=$official

@@ -51,11 +51,19 @@ npm config get registry          # 官方源是 https://registry.npmjs.org/
 npm publish --dry-run            # 先干跑，确认文件清单
 npm login --registry=https://registry.npmjs.org/
 npm whoami --registry=https://registry.npmjs.org/
-npm publish --registry=https://registry.npmjs.org/
+npm publish --registry=https://registry.npmjs.org/ --otp=123456   # 六位码 30 秒有效，过期就重来
 ```
 
 **国内机器必看**：默认源经常是 `registry.npmmirror.com`。`publishConfig` 会把包发到官方源，但**登录 token 是按 registry 分开存的**——在镜像源上 `npm login` 拿到的 token 对 npmjs 无效，`npm publish` 会直接 401。
 所以登录、whoami、publish 三条都要显式带 `--registry=https://registry.npmjs.org/`。
+
+**2FA 三种解法**（E403 `Two-factor authentication ... is required`）：
+
+| 做法 | 命令 / 操作 | 适合 |
+| --- | --- | --- |
+| 每次带 OTP | `npm publish --otp=123456`，或 `pwsh scripts/release.ps1 -Publish -Otp 123456` | 手机上有认证器，偶尔发一次 |
+| 把 2FA 降成 auth-only | npmjs.com → Account → Two-factor authentication → 选 `Authorization only` | 单人维护，嫌每次掏手机麻烦 |
+| granular token 勾 Bypass 2FA | 生成 token 后 `npm publish` 不再要码 | CI 发布；但 npm 正在限制这类 token 用于发布，别当长期方案 |
 
 要点：
 
