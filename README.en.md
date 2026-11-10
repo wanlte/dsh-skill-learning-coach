@@ -44,7 +44,7 @@ The repo ships a prebuilt `lib/`, so install straight from GitHub — no npm acc
 pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
 pnpm dsh plugin --profile web     add github:wanlte/dsh-skill-learning-coach
 
-# pin a specific version with the tarball attached to the release (already built)
+# pin a specific version with the tarball attached to the release (works once the v0.2.4 release exists)
 pnpm dsh plugin --profile desktop add https://github.com/wanlte/dsh-skill-learning-coach/releases/download/v0.2.4/dsh-skill-learning-coach-0.2.4.tgz
 ```
 

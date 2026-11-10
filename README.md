@@ -45,7 +45,7 @@ DSH（DeepSeek Harness）的一个插件，由三块拼成：一张原生设置�
 pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
 pnpm dsh plugin --profile web     add github:wanlte/dsh-skill-learning-coach
 
-# 想钉死某个版本，用 Release 里的 tarball（tarball 已经是构建好的产物）
+# 想钉死某个版本，用 Release 里挂的 tarball（v0.2.4 的 Release 建好后这条才有效）
 pnpm dsh plugin --profile desktop add https://github.com/wanlte/dsh-skill-learning-coach/releases/download/v0.2.4/dsh-skill-learning-coach-0.2.4.tgz
 ```
 
