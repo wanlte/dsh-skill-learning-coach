@@ -2,8 +2,6 @@
 
 **一个记得你卡在哪的 DSH 学习陪练。** 路线在设置卡里改，进度在盘上，学没学会由你的产出说了算。
 
-[![npm version](https://img.shields.io/npm/v/dsh-skill-learning-coach.svg)](https://www.npmjs.com/package/dsh-skill-learning-coach)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-skill-learning-coach.svg)](https://www.npmjs.com/package/dsh-skill-learning-coach)
 [![CI](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -40,13 +38,21 @@ DSH（DeepSeek Harness）的一个插件，由三块拼成：一张原生设置�
 
 ## 装
 
+仓库里带编译好的 `lib/`，直接从 GitHub 装就行，不需要 npm 账号，也不需要在本机构建：
+
 ```sh
 # 桌面版 / 网页版，按平台换 --profile
-pnpm dsh plugin --profile desktop add dsh-skill-learning-coach
-pnpm dsh plugin --profile web     add dsh-skill-learning-coach
+pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
+pnpm dsh plugin --profile web     add github:wanlte/dsh-skill-learning-coach
 
-# 没有本地 dsh 命令时
-npx @deepseek-ai/dsh plugin add dsh-skill-learning-coach
+# 想钉死某个版本，用 Release 里的 tarball（tarball 已经是构建好的产物）
+pnpm dsh plugin --profile desktop add https://github.com/wanlte/dsh-skill-learning-coach/releases/download/v0.2.4/dsh-skill-learning-coach-0.2.4.tgz
+```
+
+没有本地 `dsh` 命令时，把 `pnpm dsh` 换成 `npx @deepseek-ai/dsh`：
+
+```sh
+npx @deepseek-ai/dsh plugin add github:wanlte/dsh-skill-learning-coach
 ```
 
 改包想立刻看到效果，用本地链接（改一次生效一次）：
@@ -55,7 +61,7 @@ npx @deepseek-ai/dsh plugin add dsh-skill-learning-coach
 pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
 ```
 
-仓库公开，也能 `github:wanlte/dsh-skill-learning-coach` 直装；代价是装的人那边要放行构建脚本并本地构建一次，日常用 npm 那条更快。
+从 git 安装时 npm/pnpm 会跑一次 `prepare`（即 `npm run build`），如果你那边不允许执行依赖的构建脚本，装出来的包仍带仓库里提交好的 `lib/`，能正常加载；想确保跑的是你自己编译的产物，就放行构建或先本地 `pnpm run build`。
 
 装完**重启 DSH**：host 半与客户端 bundle 要重启才加载。之后只改 `skills/` 里的 Markdown 不必重启。
 设置里侧边栏一级会多一项「学习路线」，与「模型」同列；没有这一项就说明没装上。
@@ -172,7 +178,7 @@ pnpm run pack:check          # tarball 内容清单自检
 
 A DSH plugin that remembers where you got stuck. The roadmap and learning method are edited in a native settings card and persisted to the workspace; "learned" means an unprompted reproduction, not a compliment from the model.
 
-Install: `pnpm dsh plugin --profile desktop add dsh-skill-learning-coach`, restart DSH, then open Settings → 学习路线.
+Install: `pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach`, restart DSH, then open Settings → 学习路线.
 Full English guide: [README.en.md](https://github.com/wanlte/dsh-skill-learning-coach/blob/main/README.en.md).
 
 ## License

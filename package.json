@@ -79,7 +79,8 @@
     "test": "pnpm run build && node --test",
     "test:client-bundle": "node scripts/check-client-bundle.mjs",
     "pack:check": "node scripts/check-package.mjs",
-    "prepack": "pnpm run build && pnpm run test:client-bundle"
+    "prepack": "pnpm run build && pnpm run test:client-bundle",
+    "prepare": "npm run build"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5"

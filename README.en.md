@@ -2,7 +2,6 @@
 
 **A DSH study coach that remembers where you got stuck.** The roadmap lives in a native settings card, the state lives on disk, and "learned" is decided by an unprompted reproduction — not by the model's encouragement.
 
-[![npm version](https://img.shields.io/npm/v/dsh-skill-learning-coach.svg)](https://www.npmjs.com/package/dsh-skill-learning-coach)
 [![CI](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/wanlte/dsh-skill-learning-coach/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -38,13 +37,21 @@ Most AI study tools stop at "here is a very complete-looking plan". On the secon
 
 ## Install
 
+The repo ships a prebuilt `lib/`, so install straight from GitHub — no npm account, no local build:
+
 ```sh
 # desktop / web build — pick the profile that matches your install
-pnpm dsh plugin --profile desktop add dsh-skill-learning-coach
-pnpm dsh plugin --profile web     add dsh-skill-learning-coach
+pnpm dsh plugin --profile desktop add github:wanlte/dsh-skill-learning-coach
+pnpm dsh plugin --profile web     add github:wanlte/dsh-skill-learning-coach
 
-# no local dsh command
-npx @deepseek-ai/dsh plugin add dsh-skill-learning-coach
+# pin a specific version with the tarball attached to the release (already built)
+pnpm dsh plugin --profile desktop add https://github.com/wanlte/dsh-skill-learning-coach/releases/download/v0.2.4/dsh-skill-learning-coach-0.2.4.tgz
+```
+
+Without a local `dsh` command, swap `pnpm dsh` for `npx @deepseek-ai/dsh`:
+
+```sh
+npx @deepseek-ai/dsh plugin add github:wanlte/dsh-skill-learning-coach
 ```
 
 Local development link (edits take effect immediately):
@@ -53,7 +60,7 @@ Local development link (edits take effect immediately):
 pnpm dsh plugin --profile desktop add link:F:/work/dsh-skill/dsh-skill-learning-coach
 ```
 
-The repo is public, so `github:wanlte/dsh-skill-learning-coach` works too — at the cost of allowing build scripts and building locally on the installer's machine. The npm path is faster.
+Installing from git also runs `prepare` (`npm run build`). If your setup blocks dependency build scripts, the committed `lib/` still loads; allow build scripts — or run `pnpm run build` yourself — only if you want your own compiled output.
 
 **Restart DSH** after installing — the host half and client bundle load at boot. Markdown under `skills/` is re-read on every load and needs no restart.
 Settings gains a first-level sidebar entry — **Learning roadmap** (「学习路线」 in the Chinese UI), next to Models. If it is not there, the plugin did not load.
