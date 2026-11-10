@@ -74,12 +74,23 @@ test('roadmap.md 规定生成时机、行格式与「不贴聊天」', () => {
   assert.ok(text.includes('不要把 HTML 贴进聊天'), '聊天里不该贴 HTML')
 })
 
-test('first-run 每一问都给出编号选项', () => {
+test('first-run 每一问都给出选项，问 4 先搜来源再问手上', () => {
   const text = read('references/first-run.md')
-  for (const marker of ['1 求职', '1 完全没接触', '1 不到 1 小时', '1 本地文件', '1 费曼', '1 就按这个']) {
+  for (const marker of ['1 求职', '1 完全没接触', '1 不到 1 小时', '1 费曼', '1 就按这个']) {
     assert.ok(text.includes(marker), `缺选项：${marker}`)
   }
   assert.ok(text.includes('回数字'), '必须说明可以只回数字')
+  assert.ok(text.includes('先搜标准来源'), '问 4 必须先搜标准来源，不能空手问')
+  assert.ok(text.includes('你手上有吗'), '搜完候选要问手上有没有')
+  assert.ok(text.includes('不许编页码'), 'locator 不许编')
+})
+
+test('materials 与 framework 都拒绝编造 locator', () => {
+  for (const file of ['references/materials.md', 'references/framework.md']) {
+    const text = read(file)
+    assert.ok(text.includes('章节待补'), `${file} 必须给出"没读到目录"时的写法`)
+    assert.ok(text.includes('编'), `${file} 必须禁止编造位置`)
+  }
 })
 
 test('SKILL.md 把路线图接进路由，但不在聊天里画树', () => {
