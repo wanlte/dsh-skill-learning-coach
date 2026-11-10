@@ -46,9 +46,10 @@ test('描述是一行可读文案，不被换行截断', () => {
 
 test('中文 README 首屏包含：定位、安装命令、收录信号、完整介绍的分节', () => {
   assert.match(readme, /记得你卡在哪/)
-  assert.match(readme, /pnpm dsh plugin --profile desktop add dsh-skill-learning-coach/)
-  assert.match(readme, /npx @deepseek-ai\/dsh plugin add dsh-skill-learning-coach/)
-  assert.match(readme, /npmjs\.com\/package\/dsh-skill-learning-coach/)
+  assert.match(readme, /pnpm dsh plugin --profile desktop add github:wanlte\/dsh-skill-learning-coach/)
+  assert.match(readme, /npx @deepseek-ai\/dsh plugin add github:wanlte\/dsh-skill-learning-coach/)
+  assert.match(readme, /github\.com\/wanlte\/dsh-skill-learning-coach/)
+  assert.ok(!readme.includes('add dsh-skill-learning-coach'), 'README 不该再给 npm registry 安装命令')
   for (const section of ['## 它是什么', '## 它解决什么', '## 装', '## 用', '## 状态与产物', '## 开发', '## English']) {
     assert.ok(readme.includes(section), `README 缺分节 ${section}`)
   }
