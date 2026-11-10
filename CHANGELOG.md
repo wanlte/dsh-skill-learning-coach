@@ -17,6 +17,11 @@
 
 - `locator` 只写真实读到的目录 / 正文；只拿到书名时写「章节待补」，**禁止编造章节号或页码**。`framework.md` / `materials.md` / `SKILL.md` 三处同步。
 
+**分发**
+
+- 仓库内提交 `lib/` 构建产物并新增 `prepare` 脚本：可以直接从 GitHub 安装（`github:wanlte/dsh-skill-learning-coach`），或装 Release 里挂的 tarball，不再依赖 npm 账号与本机构建。
+- README 安装段改成 GitHub / tarball 两种写法，去掉 npm 安装命令与 npm 徽章。
+
 ## 0.2.3 — 2026-11-09
 
 引导与展示改造：问的时候给选项，问完看得见路线图。
