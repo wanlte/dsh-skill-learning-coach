@@ -1,9 +1,9 @@
 # 一条命令跑完发布门；加 -Publish 才真的发。
 # 用法：
 #   pwsh scripts/release.ps1                  # 只跑门 + 干跑
-#   pwsh scripts/release.ps1 -Publish -Otp 123456   # 真发（账号开了 2FA 时给六位码）
-#   pwsh scripts/release.ps1 -Publish         # 真发（2FA 已设为 auth-only 时不用给码）
-#   pwsh scripts/release.ps1 -Tag             # 打 tag 并推（需 git 凭据）
+#   pwsh scripts/release.ps1 -Publish         # 真发；跑到发布前会提示你输六位码（推荐）
+#   pwsh scripts/release.ps1 -Publish -Tag    # 真发 + 打 tag 并推
+# -Otp 可以预先给，但六位码只有 30 秒有效期，前面的门要跑一两分钟，所以默认不预先给。
 
 param(
   [switch]$Publish,
@@ -54,6 +54,15 @@ npm whoami --registry=$official
 if ($LASTEXITCODE -ne 0) { throw "未登录官方源：npm login --registry=$official" }
 
 Write-Output "-- 发布"
+# 六位码只有 30 秒有效期，而上面的门要跑一两分钟，所以码必须在发布这一刻才取。
+if ([Console]::IsInputRedirected) {
+  if ($Otp -eq '') { throw '需要六位码但当前不是交互终端：改用 -Otp <六位码>，或直接在终端里跑本脚本' }
+} else {
+  $hint = if ($Otp -ne '') { "（直接回车用刚才给的 $Otp）" } else { '' }
+  $typed = (Read-Host "App 上当前的六位码$hint").Trim()
+  if ($typed -ne '') { $Otp = $typed }
+  if ($Otp -eq '') { throw '没有六位码，发布已取消' }
+}
 $publishArgs = @('publish', "--registry=$official")
 if ($Otp -ne '') { $publishArgs += "--otp=$Otp" }
 npm @publishArgs
