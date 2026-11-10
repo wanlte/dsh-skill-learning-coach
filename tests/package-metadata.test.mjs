@@ -107,3 +107,11 @@ test('CI 覆盖双平台双 Node，且跑四道门', () => {
     assert.ok(ci.includes(gate), `CI 缺 ${gate}`)
   }
 })
+
+test('pnpm 版本只在一处声明：action-setup 不许再带 version', () => {
+  // 两边都写会触发 "Multiple versions of pnpm specified"，job 在第一步就死，后面全跳过。
+  assert.match(pkg.packageManager, /^pnpm@\d+\.\d+\.\d+$/, 'package.json 必须声明 packageManager')
+  const setup = ci.slice(ci.indexOf('pnpm/action-setup'))
+  const setupBlock = setup.slice(0, setup.indexOf('- uses:'))
+  assert.ok(!/^\s+version:/m.test(setupBlock), 'pnpm/action-setup 不该再传 version，会与 packageManager 打架')
+})
