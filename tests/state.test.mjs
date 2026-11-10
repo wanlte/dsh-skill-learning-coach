@@ -16,7 +16,11 @@ test('路径包含性：拒绝绝对路径与 ..', () => {
   assert.throws(() => resolveStatePath('/ws', '../evil.json'), err => err.code === 'bad-path')
   assert.throws(() => resolveStatePath('/ws', 'learning/../../evil.json'), err => err.code === 'bad-path')
   assert.throws(() => resolveStatePath('/ws', '/etc/evil.json'), err => err.code === 'bad-path')
-  assert.throws(() => resolveStatePath('C:/ws', 'C:/evil.json'), err => err.code === 'bad-path')
+  assert.throws(() => resolveStatePath('/ws', resolve('/evil.json')), err => err.code === 'bad-path')
+  // 盘符路径只在 Windows 上是绝对路径；Linux 上 `C:/x` 就是个普通相对名，不该拿这条去断言。
+  if (process.platform === 'win32') {
+    assert.throws(() => resolveStatePath('C:/ws', 'C:/evil.json'), err => err.code === 'bad-path')
+  }
   assert.equal(resolveStatePath('/ws', STATE_RELATIVE), resolve('/ws', 'learning', 'framework.json'))
 })
 
